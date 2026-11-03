@@ -21,7 +21,8 @@ export type SimState = { tick: number; nations: Nation[]; units: ArmyUnit[]; war
 const palette = ["#3977d5","#d94c4c","#a56bd6","#d99b3d","#4ca58b","#4eaa65","#df79a2","#c6a84a","#55a6a0","#b36c54"];
 const seed = (s: string, n: number) => { let h = n + 2166136261; for (let i=0;i<s.length;i++) h = Math.imul(h ^ s.charCodeAt(i),16777619); return (h>>>0)/4294967295; };
 const records: any[] = worldCountries as any[];
-const topo: any = (await import("world-atlas/countries-110m.json")).default;
+import topoData from "world-atlas/countries-110m.json";
+const topo: any = topoData;
 function flattenArcs(a: any, out: number[] = []): number[] {
   if (typeof a === "number") out.push(a < 0 ? ~a : a);
   else if (Array.isArray(a)) a.forEach(v => flattenArcs(v,out));

@@ -10,8 +10,8 @@ const fmt=(v:number)=>new Intl.NumberFormat("en-US").format(v);
 const STORE="world-simulator-osm-beta-01";
 function loadState():SimState{try{const raw=localStorage.getItem(STORE);if(raw){const parsed=JSON.parse(raw) as SimState;if(parsed.nations?.length&&parsed.units&&parsed.control)return parsed}}catch{}return createInitialState()}
 export default function App(){
- const[state,setState]=useState<SimState>(loadState),[selected,setSelected]=useState("840"),[speed,setSpeed]=useState(1),[paused,setPaused]=useState(false),[tab,setTab]=useState<"army"|"upgrades"|"wars"|"ai"|"diplomacy">("army"),[query,setQuery]=useState(""),[recruit,setRecruit]=useState(0),[partner,setPartner]=useState("156"),[saveNote,setSaveNote]=useState("Auto-save enabled");
- useEffect(()=>{if(paused)return;const timer=window.setInterval(()=>setState(s=>advanceWorld(s)),Math.max(450,2200/speed));return()=>clearInterval(timer)},[paused,speed]);
+ const[entered,setEntered]=useState(false),[state,setState]=useState<SimState>(loadState),[selected,setSelected]=useState("840"),[speed,setSpeed]=useState(1),[paused,setPaused]=useState(false),[tab,setTab]=useState<"army"|"upgrades"|"wars"|"ai"|"diplomacy">("army"),[query,setQuery]=useState(""),[recruit,setRecruit]=useState(0),[partner,setPartner]=useState("156"),[saveNote,setSaveNote]=useState("Auto-save enabled");
+ useEffect(()=>{if(paused||!entered)return;const timer=window.setInterval(()=>setState(s=>advanceWorld(s)),Math.max(450,2200/speed));return()=>clearInterval(timer)},[paused,speed,entered]);
  useEffect(()=>{try{localStorage.setItem(STORE,JSON.stringify(state));setSaveNote("Saved · tick "+state.tick)}catch{setSaveNote("Storage full · export not available")}},[state]);
  const topo=worldData as any,geo=useMemo(()=>feature(topo,topo.objects.countries) as GeoJsonObject,[]);
  const nation=state.nations.find(n=>n.id===selected)??state.nations[0],units=state.units.filter(u=>u.nationId===selected),wars=state.wars.filter(w=>w.attacker===selected||w.defender===selected),active=state.wars.filter(w=>w.status!=="Ceasefire");
@@ -20,6 +20,27 @@ export default function App(){
  const fmtPop=(v:number)=>v>=1e9?(v/1e9).toFixed(2)+"B":(v/1e6).toFixed(1)+"M";
  const owner=state.control[selected]??selected,partnerNation=nationById.get(partner),rel=state.relations[relationKey(selected,partner)]??0;
  const treatyTypes=["Non-aggression","Alliance","Trade"] as const;
+ if(!entered)return <main className="beta-gate">
+  <div className="gate-top"><div className="brand"><div className="brand-mark">🌐</div><div><strong>WORLD SIMULATOR</strong><small>OSM · AUTONOMOUS WORLD</small></div></div><span className="gate-status"><i/> PRIVATE PREVIEW · BETA 0.2</span></div>
+  <section className="gate-hero">
+   <div className="gate-kicker">GLOBAL STRATEGY SIMULATION · EARLY ACCESS</div>
+   <div className="gate-globe">🌍</div>
+   <h1>Observe a world.<br/><em>Shape its simulation.</em></h1>
+   <p className="gate-copy">Một thế giới mô phỏng với các quốc gia, chính phủ AI, quân đội, kinh tế và ngoại giao vận hành theo thời gian. Bản thử nghiệm chỉ bắt đầu khi bạn chủ động vào game.</p>
+   <div className="gate-actions">
+    <button className="gate-primary" onClick={()=>setEntered(true)}>▶ VÀO THỬ NGHIỆM BETA</button>
+    <button className="gate-secondary" onClick={()=>{setState(createInitialState());setSelected("840");setPaused(false);setSpeed(1);setEntered(true)}}>＋ TẠO THẾ GIỚI MỚI</button>
+   </div>
+   <div className="gate-note">Tiếp tục sẽ tải thế giới đã lưu trên trình duyệt này. Tạo thế giới mới sẽ ghi đè bản lưu hiện tại.</div>
+  </section>
+  <section className="gate-features">
+   <article><span>01 / WORLD</span><b>Bản đồ toàn cầu</b><p>Quốc gia, thủ đô, biên giới đất liền và quyền kiểm soát lãnh thổ.</p></article>
+   <article><span>02 / MILITARY</span><b>Quân đội & chiến dịch</b><p>Tuyển quân, hậu cần, nâng cấp và các giai đoạn tiến quân.</p></article>
+   <article><span>03 / GOVERNMENT</span><b>Chính phủ AI</b><p>Các quốc gia tự đánh giá tình hình và đưa ra quyết định mô phỏng.</p></article>
+   <article><span>04 / DIPLOMACY</span><b>Ngoại giao</b><p>Hiệp ước không xâm lược, liên minh và thương mại song phương.</p></article>
+  </section>
+  <footer className="gate-footer"><span>WORLD SIMULATOR OSM · BETA 0.2</span><span>PREVIEW BUILD · NOT THE PRODUCTION RELEASE</span></footer>
+ </main>;
  return <main className="shell">
  <header className="topbar"><div className="brand"><div className="brand-mark">🌐</div><div><strong>WORLD SIMULATOR</strong><small>OSM • AUTONOMOUS WORLD</small></div></div><div className="live"><span className="pulse"/> BETA 0.1 · AI SPECTATOR</div></header>
  <section className="statusbar"><div><small>SIMULATION TICK</small><strong>#{fmt(state.tick)}</strong></div><div><small>COUNTRIES</small><strong>{state.nations.length}</strong></div><div><small>ACTIVE CAMPAIGNS</small><strong>{active.length}</strong></div><div><small>FORMATIONS</small><strong>{state.units.length}</strong></div></section>

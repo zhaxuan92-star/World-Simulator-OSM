@@ -57,7 +57,7 @@ export function advanceWorld(s:SimState):SimState{const tick=s.tick+1,units=s.un
     }
     const dx=(u.targetX??u.x)-u.x,dy=(u.targetY??u.y)-u.y,distance=Math.hypot(dx,dy);
     if(distance<0.22){
-      u.x=u.targetX??u.x;u.y=u.targetY??u.y;u.targetX=undefined;u.targetY=undefined;u.status="At capital";u.nextMoveTick=tick+8;
+      u.x=u.targetX??u.x;u.y=u.targetY??u.y;u.targetX=undefined;u.targetY=undefined;u.status="At capital";u.nextMoveTick=tick+35;
     }else{
       const step=Math.min(0.12,distance),ratio=step/distance;
       u.x+=dx*ratio;u.y+=dy*ratio;u.status="Patrolling";

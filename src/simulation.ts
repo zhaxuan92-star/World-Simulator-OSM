@@ -14,8 +14,8 @@ const arcOwners=new Map<number,string[]>();
 for(const g of topo.objects.countries.geometries){const id=String(g.id).padStart(3,"0");for(const arc of new Set(flattenArcs(g.arcs??[]))){const list=arcOwners.get(arc)??[];list.push(id);arcOwners.set(arc,list)}}
 const adjacency=new Map<string,Set<string>>();
 for(const ids of arcOwners.values())for(const a of ids)for(const b of ids)if(a!==b){if(!adjacency.has(a))adjacency.set(a,new Set());adjacency.get(a)!.add(b)}
-const valid=records.filter(c=>c.ccn3&&c.name?.common&&c.capitalInfo?.latlng?.length===2&&c.ccn3!=="010");
-export const nationDatabase:Nation[]=valid.map((c:any,i:number)=>({id:String(c.ccn3).padStart(3,"0"),name:c.name.common,capital:c.capital?.[0]??"Capital unavailable",lat:Number(c.capitalInfo.latlng[0]),lon:Number(c.capitalInfo.latlng[1]),neighbors:[...(adjacency.get(String(c.ccn3).padStart(3,"0"))??[])],color:palette[i%palette.length],population:Number(c.population??0),budget:Math.max(1,Math.round(Number(c.population??0)/1e6*.012)),aggression:Math.round(seed(c.cca3,11)*70+15),diplomacy:Math.round(seed(c.cca3,23)*65+25),stability:Math.round(seed(c.cca3,37)*45+45)}));
+const valid=records.filter(c=>c.ccn3&&c.name?.common&&c.latlng?.length===2&&c.ccn3!=="010");
+export const nationDatabase:Nation[]=valid.map((c:any,i:number)=>({id:String(c.ccn3).padStart(3,"0"),name:c.name.common,capital:c.capital?.[0]??"Capital unavailable",lat:Number(c.latlng[0]),lon:Number(c.latlng[1]),neighbors:[...(adjacency.get(String(c.ccn3).padStart(3,"0"))??[])],color:palette[i%palette.length],population:Number(c.population??0),budget:Math.max(1,Math.round(Number(c.population??0)/1e6*.012)),aggression:Math.round(seed(c.cca3,11)*70+15),diplomacy:Math.round(seed(c.cca3,23)*65+25),stability:Math.round(seed(c.cca3,37)*45+45)}));
 export const upgradeCatalog=[
 {id:"training",name:"Advanced training",description:"Improves readiness and combat performance.",cost:18,effect:"+8 readiness"},
 {id:"logistics",name:"Supply network",description:"Reduces supply loss during campaigns.",cost:22,effect:"+1 supply / tick"},

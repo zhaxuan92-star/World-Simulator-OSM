@@ -1,8 +1,8 @@
 import worldCountries from "world-countries";
 import topoData from "world-atlas/countries-110m.json";
 
-export type Nation={id:string;name:string;capital:string;lat:number;lon:number;neighbors:string[];color:string;population:number;budget:number;aggression:number;diplomacy:number;stability:number};
-export type ArmyUnit={id:string;nationId:string;name:string;branch:"Army"|"Air Force"|"Navy"|"Logistics";type:string;personnel:number;strength:number;level:number;readiness:number;supply:number;x:number;y:number;status:"At capital"|"Moving to frontier"|"Advancing"|"In battle";progress:number;targetId?:string;warId?:string};
+export type Nation={id:string;name:string;capital:string;lat:number;lon:number;neighbors:string[];color:string;flag:string;population:number;budget:number;aggression:number;diplomacy:number;stability:number};
+export type ArmyUnit={id:string;nationId:string;name:string;branch:"Army"|"Air Force"|"Navy"|"Logistics";type:string;personnel:number;strength:number;level:number;readiness:number;supply:number;x:number;y:number;status:"At capital"|"Moving to frontier"|"Advancing"|"In battle"|"Patrolling";progress:number;targetId?:string;warId?:string;targetX?:number;targetY?:number;nextMoveTick?:number};
 export type War={id:string;attacker:string;defender:string;status:"Mobilizing"|"Active"|"Ceasefire";stage:"Mobilizing"|"Border approach"|"Advance"|"Battle"|"Occupation";progress:number;started:number;frontline:[number,number];sector:number;log:string[]};
 export type Treaty={id:string;a:string;b:string;type:"Non-aggression"|"Alliance"|"Trade";created:number;active:boolean};
 export type SimState={tick:number;nations:Nation[];units:ArmyUnit[];wars:War[];upgrades:Record<string,number>;credits:Record<string,number>;control:Record<string,string>;relations:Record<string,number>;treaties:Treaty[];events:string[]};
@@ -15,7 +15,7 @@ for(const g of topo.objects.countries.geometries){const id=String(g.id).padStart
 const adjacency=new Map<string,Set<string>>();
 for(const ids of arcOwners.values())for(const a of ids)for(const b of ids)if(a!==b){if(!adjacency.has(a))adjacency.set(a,new Set());adjacency.get(a)!.add(b)}
 const valid=records.filter(c=>c.ccn3&&c.name?.common&&c.latlng?.length===2&&c.ccn3!=="010");
-export const nationDatabase:Nation[]=valid.map((c:any,i:number)=>({id:String(c.ccn3).padStart(3,"0"),name:c.name.common,capital:c.capital?.[0]??"Capital unavailable",lat:Number(c.latlng[0]),lon:Number(c.latlng[1]),neighbors:[...(adjacency.get(String(c.ccn3).padStart(3,"0"))??[])],color:palette[i%palette.length],population:Number(c.population??0),budget:Math.max(1,Math.round(Number(c.population??0)/1e6*.012)),aggression:Math.round(seed(c.cca3,11)*70+15),diplomacy:Math.round(seed(c.cca3,23)*65+25),stability:Math.round(seed(c.cca3,37)*45+45)}));
+export const nationDatabase:Nation[]=valid.map((c:any,i:number)=>({id:String(c.ccn3).padStart(3,"0"),name:c.name.common,capital:c.capital?.[0]??"Capital unavailable",lat:Number(c.latlng[0]),lon:Number(c.latlng[1]),neighbors:[...(adjacency.get(String(c.ccn3).padStart(3,"0"))??[])],color:palette[i%palette.length],flag:typeof c.flag==="string"&&c.flag?c.flag:"🏳️",population:Number(c.population??0),budget:Math.max(1,Math.round(Number(c.population??0)/1e6*.012)),aggression:Math.round(seed(c.cca3,11)*70+15),diplomacy:Math.round(seed(c.cca3,23)*65+25),stability:Math.round(seed(c.cca3,37)*45+45)}));
 export const upgradeCatalog=[
 {id:"training",name:"Advanced training",description:"Improves readiness and combat performance.",cost:18,effect:"+8 readiness"},
 {id:"logistics",name:"Supply network",description:"Reduces supply loss during campaigns.",cost:22,effect:"+1 supply / tick"},
@@ -45,6 +45,24 @@ export function signTreaty(s:SimState,a:string,b:string,type:Treaty["type"]):Sim
 export function advanceWorld(s:SimState):SimState{const tick=s.tick+1,units=s.units.map(u=>({...u})),wars=s.wars.map(w=>({...w,log:[...w.log]})),control={...s.control},credits={...s.credits},events:string[]=[];
   // Passive economy and supply recovery at home bases.
   for(const n of s.nations){credits[n.id]=Math.min(500, (credits[n.id]??0)+Math.max(1,Math.round(n.budget/30)));for(const u of units.filter(x=>x.nationId===n.id&&x.status==="At capital"))u.supply=Math.min(100,u.supply+2+(s.upgrades[n.id+":logistics"]??0))}
+  // Independent AI patrol: every formation chooses its own destination without player orders.
+  for(const u of units){
+    if(u.warId)continue;
+    if(!Number.isFinite(u.targetX)||!Number.isFinite(u.targetY)){
+      if(tick<(u.nextMoveTick??0))continue;
+      const destinations=s.nations.filter(n=>n.id!==u.nationId);
+      if(!destinations.length)continue;
+      const target=destinations[Math.floor(seed(u.id,Math.floor(tick/35))*destinations.length)];
+      u.targetX=target.lat;u.targetY=target.lon;u.status="Patrolling";u.nextMoveTick=tick+1;
+    }
+    const dx=(u.targetX??u.x)-u.x,dy=(u.targetY??u.y)-u.y,distance=Math.hypot(dx,dy);
+    if(distance<0.22){
+      u.x=u.targetX??u.x;u.y=u.targetY??u.y;u.targetX=undefined;u.targetY=undefined;u.status="At capital";u.nextMoveTick=tick+8;
+    }else{
+      const step=Math.min(0.12,distance),ratio=step/distance;
+      u.x+=dx*ratio;u.y+=dy*ratio;u.status="Patrolling";
+    }
+  }
   // Autonomous governments can initiate only adjacent, independent and non-treaty conflicts.
   if(tick%10===0&&wars.filter(w=>w.status!=="Ceasefire").length<4){const candidates=s.nations.filter(n=>n.neighbors.length&&n.aggression>68&&control[n.id]===n.id).sort((a,b)=>seed(a.id,tick)-seed(b.id,tick));for(const attacker of candidates){const targets=attacker.neighbors.map(id=>s.nations.find(n=>n.id===id)).filter((n):n is Nation=>!!n&&control[n.id]===n.id&&!wars.some(w=>w.status!=="Ceasefire"&&((w.attacker===attacker.id&&w.defender===n.id)||(w.defender===attacker.id&&w.attacker===n.id)))&&!s.treaties.some(t=>t.active&&t.type!=="Trade"&&relationKey(t.a,t.b)===relationKey(attacker.id,n.id))).sort((a,b)=>a.stability-b.stability);const target=targets[0];if(!target)continue;const powerA=totalPower(units,attacker.id),powerD=totalPower(units,target.id);if(powerA>powerD*.7&&seed(attacker.id+target.id,tick)>.48){const id="WAR-"+attacker.id+"-"+target.id+"-"+tick;const [lat,lon]=borderPoint(attacker,target);const unit=units.filter(u=>u.nationId===attacker.id&&u.branch==="Army"&&u.status==="At capital").sort((a,b)=>b.strength-a.strength)[0];if(!unit)continue;unit.warId=id;unit.targetId=target.id;unit.status="Moving to frontier";unit.progress=0;wars.push({id,attacker:attacker.id,defender:target.id,status:"Mobilizing",stage:"Mobilizing",progress:0,started:tick,frontline:[lat,lon],sector:0,log:["AI approved a border-adjacent campaign after checking readiness, force balance and diplomacy."]});events.push(attacker.name+" declared a simulated war against "+target.name+". The formation departed "+attacker.capital+".");break}}}
   for(const w of wars.filter(x=>x.status!=="Ceasefire")){const a=s.nations.find(n=>n.id===w.attacker),d=s.nations.find(n=>n.id===w.defender),u=units.find(x=>x.warId===w.id);if(!a||!d||!u)continue;u.supply=Math.max(0,u.supply-(s.upgrades[a.id+":logistics"]?0.5:1.2));if(u.supply<15)u.readiness=Math.max(15,u.readiness-1);

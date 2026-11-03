@@ -43,14 +43,15 @@ function borderPoint(a:Nation,b:Nation):[number,number]{const ga=topo.objects.co
 function totalPower(units:ArmyUnit[],id:string){return units.filter(u=>u.nationId===id).reduce((v,u)=>v+u.strength*u.level*(u.readiness/100)*(u.supply/100),0)}
 export function signTreaty(s:SimState,a:string,b:string,type:Treaty["type"]):SimState{if(a===b||s.control[a]!==a||s.control[b]!==b)return s;const key=relationKey(a,b);if(s.treaties.some(t=>t.active&&relationKey(t.a,t.b)===key&&t.type===type))return s;const treaty:Treaty={id:key+":"+type+":"+s.tick,a,b,type,created:s.tick,active:true};const delta=type==="Alliance"?25:type==="Non-aggression"?18:12;return{...s,treaties:[...s.treaties,treaty],relations:{...s.relations,[key]:Math.min(100,(s.relations[key]??0)+delta)},events:[type+" treaty signed: "+nationName(s,a)+" and "+nationName(s,b)+".",...s.events].slice(0,30)}}
 export function advanceWorld(s:SimState):SimState{const tick=s.tick+1,units=s.units.map(u=>({...u})),wars=s.wars.map(w=>({...w,log:[...w.log]})),control={...s.control},credits={...s.credits},events:string[]=[];
-  // Passive economy and supply recovery at home bases.
-  for(const n of s.nations){credits[n.id]=Math.min(500, (credits[n.id]??0)+Math.max(1,Math.round(n.budget/30)));for(const u of units.filter(x=>x.nationId===n.id&&x.status==="At capital"))u.supply=Math.min(100,u.supply+2+(s.upgrades[n.id+":logistics"]??0))}
+  // Passive economy and supply recovery: group units once to avoid repeated full-array scans.
+  const unitsByNation=new Map<string,ArmyUnit[]>();for(const u of units){const group=unitsByNation.get(u.nationId);if(group)group.push(u);else unitsByNation.set(u.nationId,[u])}
+  for(const n of s.nations){credits[n.id]=Math.min(500,(credits[n.id]??0)+Math.max(1,Math.round(n.budget/30)));for(const u of unitsByNation.get(n.id)??[])if(u.status==="At capital")u.supply=Math.min(100,u.supply+2+(s.upgrades[n.id+":logistics"]??0))}
   // Independent AI patrol: every formation chooses its own destination without player orders.
   for(const u of units){
     if(u.warId)continue;
     if(!Number.isFinite(u.targetX)||!Number.isFinite(u.targetY)){
       if(tick<(u.nextMoveTick??0))continue;
-      const destinations=s.nations.filter(n=>n.id!==u.nationId);
+      const home=s.nations.find(n=>n.id===u.nationId),destinations=home?.neighbors.map(id=>s.nations.find(n=>n.id===id)).filter((n):n is Nation=>!!n)??[];
       if(!destinations.length)continue;
       const target=destinations[Math.floor(seed(u.id,Math.floor(tick/35))*destinations.length)];
       u.targetX=target.lat;u.targetY=target.lon;u.status="Patrolling";u.nextMoveTick=tick+1;
@@ -59,7 +60,7 @@ export function advanceWorld(s:SimState):SimState{const tick=s.tick+1,units=s.un
     if(distance<0.22){
       u.x=u.targetX??u.x;u.y=u.targetY??u.y;u.targetX=undefined;u.targetY=undefined;u.status="At capital";u.nextMoveTick=tick+35;
     }else{
-      const step=Math.min(0.12,distance),ratio=step/distance;
+      const step=Math.min(0.42,distance),ratio=step/distance;
       u.x+=dx*ratio;u.y+=dy*ratio;u.status="Patrolling";
     }
   }

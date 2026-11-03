@@ -46,3 +46,7 @@
 .crash-card details code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:9px;color:#ffb7a8}
 .crash-card button{display:block;width:100%;padding:12px;margin-top:9px;border:1px solid #4d91bd;background:#1b4a6b;color:#fff;border-radius:7px;font:11px 'DM Mono',monospace}
 .crash-card button.crash-secondary{background:#251e19;border-color:#765343;color:#ffd0bd}
+
+/* Beta 0.3: autonomous national flag markers */
+.army-flag-icon{background:transparent!important;border:0!important;display:grid;place-items:center;}
+.army-flag-icon span{display:grid;place-items:center;width:25px;height:22px;font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px #000) drop-shadow(0 0 2px #000);transform:translateZ(0);}

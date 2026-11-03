@@ -91,9 +91,17 @@ export function upgradeNation(s:SimState,nationId:string,upgradeId:string):SimSt
     events:[nationName(s,nationId)+" upgraded "+upgradeId+" to level "+(level+1)+".",...s.events].slice(0,30)};
 }
 function borderPoint(a:Nation,b:Nation):[number,number] {
-  let lat=(a.lat+b.lat)/2, lon=(a.lon+b.lon)/2;
-  if(Math.abs(lon)>180) lon=((lon+540)%360)-180;
-  return [lat,lon];
+  const ga=topo.objects.countries.geometries.find((g:any)=>String(g.id).padStart(3,"0")===a.id);
+  const gb=topo.objects.countries.geometries.find((g:any)=>String(g.id).padStart(3,"0")===b.id);
+  const arcsA=new Set(flattenArcs(ga?.arcs??[]));
+  const shared=flattenArcs(gb?.arcs??[]).filter(i=>arcsA.has(i));
+  const candidates=shared.map(index=>({index,length:(topo.arcs[index]??[]).length})).sort((x,y)=>y.length-x.length);
+  if(candidates.length && topo.transform){
+    const arc=topo.arcs[candidates[0].index]; let x=0,y=0;
+    const coords=arc.map((delta:number[])=>{x+=delta[0];y+=delta[1];return [y*topo.transform.scale[1]+topo.transform.translate[1],x*topo.transform.scale[0]+topo.transform.translate[0]] as [number,number]});
+    if(coords.length)return coords[Math.floor(coords.length/2)];
+  }
+  return [(a.lat+b.lat)/2,(a.lon+b.lon)/2];
 }
 function pathToTarget(s:SimState,from:Nation,target:Nation):string[] {
   const q:[string,string[]][]=[[from.id,[from.id]]], seen=new Set([from.id]);

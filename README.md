@@ -1,12 +1,15 @@
 # World Simulator OSM
 
-A mobile-friendly, spectator-only global strategy simulation prototype. Every nation is AI-controlled; the visitor observes the world.
+Spectator-only global strategy simulation prototype. Every nation is intended to be governed by an autonomous agent; visitors observe the world rather than command a faction.
 
-## Current prototype
-- World map with OpenStreetMap raster tiles and Natural Earth country boundaries from `world-atlas`.
-- Nation directory, selected nation profile, event feed, simulation clock and speed controls.
-- Deterministic time-based prototype state: the displayed simulation tick is derived from wall-clock time, so the timeline advances while the page is closed and catches up when reopened.
-- No user-controlled faction and no external AI API key required.
+## Current prototype (0.2.0)
+- OpenStreetMap raster basemap with Natural Earth country boundaries.
+- Nation directory and selectable country profiles.
+- Military system design: personnel, armor, aircraft, naval vessels, artillery, readiness, logistics, military branches and installation records.
+- AI profile design: personality, strategic doctrine, aggression, diplomacy, economic priority, risk tolerance and a four-stage decision pipeline.
+- Conquest-engine blueprint: adjacency, war decision, frontline simulation and audited territorial control changes.
+- Diplomacy framework: alliances, trade, negotiations, sanctions, ceasefires and treaty register.
+- Mobile-responsive observer interface.
 
 ## Run
 ```bash
@@ -19,12 +22,19 @@ npm run dev
 npm run build
 ```
 
-## Important limitations
-This first deployment is a front-end prototype. The simulated nation metrics and event feed are illustrative and deterministic, not a validated geopolitical forecast. It does not yet persist authoritative world state in a server database or run a continuously executing worker. A later backend phase is required for shared live state across devices, real AI decision cycles, wars that change borders, and a durable event history.
+## Simulation status and limitations
+This release is a systems-design prototype. Country force inventories, base locations, AI profiles, treaty records and event feed are illustrative seed data. They are not verified current military intelligence, and no live combat, autonomous agent execution, territorial conquest or persistent diplomacy is active yet.
 
-## Map data and attribution
-- Map tiles: © OpenStreetMap contributors. Tile usage must follow the [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
-- Country boundaries: `world-atlas` / Natural Earth. Verify and retain upstream dataset licensing/attribution when redistributing modified boundary data.
+The next engineering milestones are:
+1. Normalize country, force, base, AI-agent and treaty records into a shared database schema.
+2. Implement deterministic AI decision cycles and auditable action logs.
+3. Build geographic adjacency and a territorial-control layer.
+4. Implement conflict resolution, supply/readiness costs and border changes.
+5. Persist world state and run simulation ticks in a durable background worker.
+
+## Map attribution
+- Map tiles: © OpenStreetMap contributors. Follow the [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+- Country boundaries: `world-atlas` / Natural Earth. Retain upstream data attribution and license notices when redistributing.
 
 ## License
 Application source: MIT.

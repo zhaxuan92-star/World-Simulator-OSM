@@ -6,7 +6,7 @@ import worldData from "world-atlas/countries-110m.json";
 import type {GeoJsonObject} from "geojson";
 import {createInitialState,ensureAIState,nationDatabase,advanceWorld,addUnit,upgradeNation,nationName,upgradeCatalog,unitTypes,signTreaty,declareWar,relationKey} from "./simulation";
 import type {SimState} from "./simulation";
-import {queueCompletedCampaigns,flushTrainingQueue,saveWorldSnapshot,pendingTrainingBatches} from "./aiSync";
+import {queueCompletedCampaigns,flushTrainingQueue,saveWorldSnapshot,loadWorldSnapshot,pendingTrainingBatches} from "./aiSync";
 import {auth,signInWithGoogle,db} from "./firebase";
 import {onAuthStateChanged} from "firebase/auth";
 import {doc,setDoc,serverTimestamp} from "firebase/firestore";
@@ -35,7 +35,7 @@ export default function App(){
  const units=state.units.filter(u=>u.nationId===selected),wars=state.wars.filter(w=>w.attacker===selected||w.defender===selected);
  const active=state.wars.filter(w=>w.status!=="Ceasefire");
  const fmtPop=(v:number)=>pop(v);
- useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(u){try{await setDoc(doc(db,"players",u.uid),{uid:u.uid,username:u.displayName??"Google player",email:u.email??"",photoURL:u.photoURL??"",authProvider:u.providerData[0]?.providerId??"google.com",status:"active",lastSeenAt:serverTimestamp()},{merge:true})}catch(e){console.warn("Profile sync failed",e)}}}),[]);
+ useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(u){try{await setDoc(doc(db,"players",u.uid),{uid:u.uid,username:u.displayName??"Google player",email:u.email??"",photoURL:u.photoURL??"",authProvider:u.providerData[0]?.providerId??"google.com",status:"active",lastSeenAt:serverTimestamp()},{merge:true});const cloud=await loadWorldSnapshot();if(cloud)setState(ensureAIState(cloud))}catch(e){console.warn("Profile/cloud load failed",e)}}}),[]);
  useEffect(()=>{if(paused||!entered)return;const t=window.setInterval(()=>setState(s=>advanceWorld(s)),Math.max(700,2100/speed));return()=>clearInterval(t)},[paused,entered,speed]);
  useEffect(()=>{if(!entered)return;try{localStorage.setItem(STORE,JSON.stringify(state));localStorage.setItem(STORE+"_time",String(Date.now()));setSaveStatus("Đã lưu máy · tick "+state.tick)}catch{setSaveStatus("Bộ nhớ máy đầy")}},[state,entered]);
  useEffect(()=>{if(!entered)return;queueCompletedCampaigns(state)},[state,entered]);

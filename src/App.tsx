@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import {MapContainer,TileLayer,GeoJSON,CircleMarker,Tooltip,Polyline,Marker,useMap} from "react-leaflet";
 import {divIcon} from "leaflet";
 import type {GeoJsonObject} from "geojson";
@@ -6,7 +6,7 @@ import {feature} from "topojson-client";
 import worldData from "world-atlas/countries-110m.json";
 import {createInitialState,ensureAIState,nationDatabase,advanceWorld,addUnit,upgradeNation,nationName,upgradeCatalog,unitTypes,signTreaty,declareWar,relationKey} from "./simulation";
 import type {SimState} from "./simulation";
-import {queueCompletedCampaigns,flushTrainingQueue,sendPendingOnExit,pendingTrainingBatches} from "./aiSync";
+import {queueCompletedCampaigns,flushTrainingQueue,sendPendingOnExit,pendingTrainingBatches,saveWorldSnapshot} from "./aiSync";
 import {auth,signInWithGoogle} from "./firebase";
 import {onAuthStateChanged,GoogleAuthProvider} from "firebase/auth";
 import {doc,setDoc,serverTimestamp} from "firebase/firestore";
@@ -20,7 +20,7 @@ function loadState():SimState{try{const raw=localStorage.getItem(STORE);if(raw){
 export default function App(){
  const[user,setUser]=useState(auth.currentUser),[authBusy,setAuthBusy]=useState(false),[authMessage,setAuthMessage]=useState(""),[entered,setEntered]=useState(false),[state,setState]=useState<SimState>(loadState),[selected,setSelected]=useState(()=>{const initial=loadState();return initial.nations.some(n=>n.id==="840")?"840":initial.nations[0]?.id??"840"}),[speed,setSpeed]=useState(1),[paused,setPaused]=useState(false),[godMode,setGodMode]=useState(true),[tab,setTab]=useState<"army"|"upgrades"|"wars"|"ai"|"diplomacy">("army"),[query,setQuery]=useState(""),[recruit,setRecruit]=useState(0),[partner,setPartner]=useState("156"),[saveNote,setSaveNote]=useState("Auto-save enabled"),[trainingSync,setTrainingSync]=useState("AI training queue ready");
  useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(u){try{await setDoc(doc(db,"players",u.uid),{uid:u.uid,username:u.displayName??"Google player",email:u.email??"",photoURL:u.photoURL??"",authProvider:u.providerData[0]?.providerId??"google.com",status:"active",lastSeenAt:serverTimestamp()},{merge:true})}catch(e){console.warn("Player profile sync failed",e)}}}),[]);
- useEffect(()=>{if(paused||!entered)return;const timer=window.setInterval(()=>setState(s=>advanceWorld(s)),Math.max(900,2200/speed));return()=>clearInterval(timer)},[paused,speed,entered]);
+ useEffect(()=>{if(!entered)return;let saving=false;const save=async()=>{if(saving)return;saving=true;const ok=await saveWorldSnapshot(stateRef.current);setSaveNote(ok?"Cloud saved · tick "+stateRef.current.tick:"Cloud save pending");saving=false};void save();const timer=window.setInterval(()=>void save(),20000);return()=>clearInterval(timer)},[entered]);\n useEffect(()=>{if(paused||!entered)return;const timer=window.setInterval(()=>setState(s=>advanceWorld(s)),Math.max(900,2200/speed));return()=>clearInterval(timer)},[paused,speed,entered]);
  useEffect(()=>{if(!entered)return;try{localStorage.setItem(STORE,JSON.stringify(state));localStorage.setItem(STORE+"_time",String(Date.now()));setSaveNote("Saved · tick "+state.tick)}catch{setSaveNote("Storage full · export not available")}},[state,entered]);
  useEffect(()=>{if(!entered)return;queueCompletedCampaigns(state);setTrainingSync(pendingTrainingBatches()?"Queued "+pendingTrainingBatches()+" AI batch(es) · server storage not connected":"AI training queue ready");},[state,entered]);
  useEffect(()=>{if(!entered)return;let busy=false;const flush=async()=>{if(busy)return;busy=true;const ok=await flushTrainingQueue();setTrainingSync(ok?"AI training batch uploaded":"AI training queued · server endpoint/storage pending");busy=false};void flush();const timer=window.setInterval(()=>void flush(),15000);const exit=()=>sendPendingOnExit();const visibility=()=>{if(document.visibilityState==="hidden")exit()};window.addEventListener("pagehide",exit);document.addEventListener("visibilitychange",visibility);return()=>{clearInterval(timer);window.removeEventListener("pagehide",exit);document.removeEventListener("visibilitychange",visibility)}},[entered]);

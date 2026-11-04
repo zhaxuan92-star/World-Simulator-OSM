@@ -1,0 +1,48 @@
+{
+  "format": "Vzc©",
+  "format_version": 1,
+  "package_type": "world-simulator-game-release",
+  "game": {
+    "name": "World Simulator",
+    "version": "2.2.0",
+    "channel": "official",
+    "build_label": "Official 2.2.0",
+    "platforms": [
+      "web",
+      "android-browser"
+    ],
+    "entry": "/",
+    "repository": "https://github.com/zhaxuan92-star/World-Simulator-OSM"
+  },
+  "release": {
+    "features": [
+      "compact command interface",
+      "warfare doctrines: conventional, guerrilla, blitzkrieg, attrition, deep defense, amphibious",
+      "continuous frontline advance without fixed three-sector occupation",
+      "optional network relay and local AI resource consent prompt",
+      "Google sign-in and Firebase cloud world snapshots",
+      "AI training event synchronization",
+      "civilian economy with GDP, tax policy, resource production and consumption",
+      "bilateral resource trading",
+      "peaceful population migration",
+      "versioned world save import and export",
+      "official main release channel"
+    ],
+    "resource_sharing": {
+      "default": "disabled",
+      "network_relay": "consent-record-only; relay service not configured",
+      "local_compute": "consent-record-only; compute worker not configured",
+      "background_usage": false
+    },
+    "notes": "Official web release descriptor for the main branch. Firebase cloud sync requires the configured Firebase Authentication providers and Firestore security rules. This Vzc© file is a release descriptor/manifest, not a standalone executable or compiled APK."
+  },
+  "copyright": {
+    "notice": "Copyright © 2026 Vzc Corporation. All rights reserved.",
+    "rights_holder": "Vzc Corporation",
+    "work": "World Simulator",
+    "release": "Official 2.2.0",
+    "notice_file": "legal/WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md",
+    "third_party_exclusions": "Third-party libraries, map datasets, map tiles, flags, external services and user-submitted content remain subject to their respective rights and licences.",
+    "legal_status": "Publisher copyright notice; not a government registration certificate."
+  }
+}

@@ -12,6 +12,30 @@ import {onAuthStateChanged,GoogleAuthProvider} from "firebase/auth";
 import {doc,setDoc,serverTimestamp} from "firebase/firestore";
 import {db} from "./firebase";
 function MapResize(){const map=useMap();useEffect(()=>{const t=setTimeout(()=>map.invalidateSize(),250);return()=>clearTimeout(t)},[map]);return null}
+type Position=[number,number];
+function clipRingX(ring:Position[],bound:number,keepGreater:boolean):Position[]{
+ if(!ring.length)return[];
+ const out:Position[]=[];const inside=(p:Position)=>keepGreater?p[0]>=bound:p[0]<=bound;
+ let prev=ring[ring.length-1],prevIn=inside(prev);
+ for(const cur of ring){const curIn=inside(cur);if(curIn!==prevIn){const dx=cur[0]-prev[0];const t=Math.abs(dx)<1e-9?0:(bound-prev[0])/dx;out.push([bound,prev[1]+(cur[1]-prev[1])*t])}if(curIn)out.push(cur);prev=cur;prevIn=curIn}
+ return out;
+}
+function clipRingToSector(ring:Position[],minX:number,maxX:number):Position[]{return clipRingX(clipRingX(ring,minX,true),maxX,false)}
+function makeSectorLayers(collection:any):any[][]{
+ const layers:any[][]=[[],[],[]];if(!collection?.features)return layers;
+ for(const f of collection.features){const g=f.geometry;if(!g||!(g.type==="Polygon"||g.type==="MultiPolygon"))continue;
+  const polys=g.type==="Polygon"?[g.coordinates]:g.coordinates;
+  const points:number[][]=[];for(const poly of polys)for(const ring of poly)for(const p of ring)points.push(p);
+  if(!points.length)continue;const min=Math.min(...points.map(p=>p[0])),max=Math.max(...points.map(p=>p[0]));if(max-min<1e-6)continue;
+  for(let s=0;s<3;s++){const left=min+(max-min)*s/3,right=min+(max-min)*(s+1)/3;
+   const clipped=polys.map((poly:any[])=>poly.map((ring:any[])=>clipRingToSector(ring as Position[],left,right)).filter((ring:Position[])=>ring.length>=4)).filter((poly:any[])=>poly.length);
+   const coordinates=g.type==="Polygon"?(clipped[0]??[]):clipped;if(!coordinates.length)continue;
+   layers[s].push({...f,geometry:{type:g.type,coordinates}});
+  }
+ }
+ return layers;
+}
+
 const fmt=(v:number)=>new Intl.NumberFormat("en-US").format(v);
 const STORE="world-simulator-osm-beta-01";
 const flagIconCache=new Map<string,ReturnType<typeof divIcon>>();
@@ -24,7 +48,7 @@ export default function App(){
  useEffect(()=>{if(!entered)return;try{localStorage.setItem(STORE,JSON.stringify(state));localStorage.setItem(STORE+"_time",String(Date.now()));setSaveNote("Saved · tick "+state.tick)}catch{setSaveNote("Storage full · export not available")}},[state,entered]);
  useEffect(()=>{if(!entered)return;queueCompletedCampaigns(state);setTrainingSync(pendingTrainingBatches()?"Queued "+pendingTrainingBatches()+" AI batch(es) · server storage not connected":"AI training queue ready");},[state,entered]);
  useEffect(()=>{if(!entered)return;let busy=false;const flush=async()=>{if(busy)return;busy=true;const ok=await flushTrainingQueue();setTrainingSync(ok?"AI training batch uploaded":"AI training queued · server endpoint/storage pending");busy=false};void flush();const timer=window.setInterval(()=>void flush(),15000);const exit=()=>sendPendingOnExit();const visibility=()=>{if(document.visibilityState==="hidden")exit()};window.addEventListener("pagehide",exit);document.addEventListener("visibilitychange",visibility);return()=>{clearInterval(timer);window.removeEventListener("pagehide",exit);document.removeEventListener("visibilitychange",visibility)}},[entered]);
- const topo=worldData as any,geo=useMemo(()=>entered?feature(topo,topo.objects.countries) as GeoJsonObject:null,[entered]);
+ const topo=worldData as any,geo=useMemo(()=>entered?feature(topo,topo.objects.countries) as GeoJsonObject:null,[entered]);\n const sectorLayers=useMemo(()=>makeSectorLayers(geo),[geo,state.sectorControl,state.control]);
  const nation=state.nations.find(n=>n.id===selected)??state.nations[0]??createInitialState().nations[0],units=state.units.filter(u=>u.nationId===selected),wars=state.wars.filter(w=>w.attacker===selected||w.defender===selected),active=state.wars.filter(w=>w.status!=="Ceasefire");
  const nations=state.nations.filter(n=>n.name.toLowerCase().includes(query.toLowerCase())),nationById=new Map(state.nations.map(n=>[n.id,n]));
  const colorById=new Map(state.nations.map(n=>[n.id,n.color])),ownerColors=new Map(state.nations.map(n=>[n.id,n.color]));
@@ -57,7 +81,7 @@ export default function App(){
  <section className="statusbar"><div><small>SIMULATION TICK</small><strong>#{fmt(state.tick)}</strong></div><div><small>COUNTRIES</small><strong>{state.nations.length}</strong></div><div><small>ACTIVE CAMPAIGNS</small><strong>{active.length}</strong></div><div><small>FORMATIONS</small><strong>{state.units.length}</strong></div></section>
  <section className="workspace"><div className="map-panel"><div className="map-heading"><div><span className="eyebrow">GLOBAL THEATER</span><h1>World campaign map</h1></div><span className="map-tag">TICK {state.tick}</span></div>
  <div className="map-wrap"><MapContainer center={[22,8]} zoom={2} minZoom={2} maxZoom={7} worldCopyJump scrollWheelZoom><MapResize/><TileLayer attribution='Tiles &copy; Esri — World Topographic Map' url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"/>
- <GeoJSON data={geo!} style={f=>{const id=String(f?.id??"").padStart(3,"0"),controller=state.control[id]??id;return{color:"#d6e2ec",weight:.65,opacity:.78,fillColor:ownerColors.get(controller)??colorById.get(id)??"#26384c",fillOpacity:.20}}}/>
+ {sectorLayers.map((features,sector)=><GeoJSON key={"territory-sector-"+sector} data={{type:"FeatureCollection",features} as any} style={f=>{const id=String(f?.id??"").padStart(3,"0"),controller=state.sectorControl?.[id+":"+sector]??state.control[id]??id;return{color:"#d6e2ec",weight:.65,opacity:.78,fillColor:ownerColors.get(controller)??colorById.get(controller)??"#26384c",fillOpacity:.32}}}/>)}
  {state.units.map(u=><Marker key={u.id} position={[u.x,u.y]} icon={armyFlagIcon(nationById.get(u.nationId)?.flagCode??"")}><Tooltip>{nationName(state,u.nationId)} · {u.name} · {u.status==="Patrolling"?"AI tự hành quân":u.status} · supply {Math.round(u.supply)}%</Tooltip></Marker>)}
  {state.wars.filter(w=>w.status!=="Ceasefire").map(w=><><Polyline key={w.id+"route"} positions={[[nationById.get(w.attacker)?.lat??0,nationById.get(w.attacker)?.lon??0],w.frontline,[nationById.get(w.defender)?.lat??0,nationById.get(w.defender)?.lon??0]]} pathOptions={{color:"#ffae65",weight:2,dashArray:"6 6"}}/><CircleMarker key={w.id} center={w.frontline} radius={7} pathOptions={{color:"#fff",fillColor:"#e45e4e",fillOpacity:.95}}><Tooltip>{nationName(state,w.attacker)} → {nationName(state,w.defender)} · {w.stage}</Tooltip></CircleMarker></>)}
  </MapContainer><div className="map-legend"><span>● Army units</span><span>┄ Campaign route</span><span>Country color = controller</span></div></div>

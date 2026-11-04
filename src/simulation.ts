@@ -65,7 +65,16 @@ export const unitTypes=[
 {name:"Logistics command",branch:"Logistics" as const,personnel:1200,strength:20,cost:15}
 ];
 function makeUnit(n:Nation,index:number):ArmyUnit{const t=unitTypes[index%4];return{id:n.id+"-"+index,nationId:n.id,name:t.name,branch:t.branch,type:t.name,personnel:t.personnel,strength:t.strength,level:1,readiness:65+Math.round(seed(n.id,index)*30),supply:100,x:n.lat,y:n.lon,status:"At capital",progress:0}}
-export function ensureAIState(s:SimState):SimState{const base=initialAI(s.nations);return{...s,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingTick:s.aiLastTrainingTick??0}}
+export function ensureAIState(s:SimState):SimState{
+ const base=initialAI(s.nations),seen=new Set<string>(),wars:War[]=[];
+ for(const w of [...(s.wars??[])].sort((a,b)=>a.started-b.started)){
+   const key=[w.attacker,w.defender].sort().join(":");
+   if(w.status!=="Ceasefire"&&seen.has(key))continue;
+   if(w.status!=="Ceasefire")seen.add(key);
+   wars.push({...w,progress:Math.max(0,Math.min(99,Number(w.progress)||0)),log:Array.isArray(w.log)?w.log:[]});
+ }
+ return{...s,wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingTick:s.aiLastTrainingTick??0};
+}
 export function createInitialState():SimState{const nations=nationDatabase;const control:Record<string,string>={},credits:Record<string,number>={},relations:Record<string,number>={};nations.forEach(n=>{control[n.id]=n.id;credits[n.id]=100});return{tick:0,nations,units:nations.map((n,i)=>makeUnit(n,i)),wars:[],upgrades:{},credits,control,relations,treaties:[],...initialAI(nations),aiLastTrainingTick:0,events:["BETA 0.1 initialized: country and capital database loaded.","Land-border adjacency generated from Natural Earth topology.","Each country starts with a national headquarters and one formation."]}}
 export function nationName(s:SimState,id:string){return s.nations.find(n=>n.id===id)?.name??id}
 export function relationKey(a:string,b:string){return[a,b].sort().join(":")}
@@ -125,7 +134,7 @@ export function advanceWorld(s:SimState):SimState{const tick=s.tick+1,units=s.un
     if(!defender)continue;
     const distance=Math.hypot(defender.x-intruder.x,intruder.y-defender.y);
     if(distance>2.5)continue;
-    const already=activeWars.find(w=>(w.attacker===intruder.nationId&&w.defender===host.id)||(w.attacker===host.id&&w.defender===intruder.nationId));
+    const already=wars.find(w=>w.status!=="Ceasefire"&&((w.attacker===intruder.nationId&&w.defender===host.id)||(w.attacker===host.id&&w.defender===intruder.nationId)));
     if(already)continue;
     const id="DEF-"+intruder.nationId+"-"+host.id+"-"+tick;
     intruder.warId=id;intruder.targetId=host.id;intruder.status="In battle";intruder.targetX=undefined;intruder.targetY=undefined;
@@ -170,9 +179,10 @@ export function advanceWorld(s:SimState):SimState{const tick=s.tick+1,units=s.un
     if(w.stage==="Mobilizing"){w.progress=Math.min(100,w.progress+20);if(w.progress>=100){w.stage="Border approach";w.progress=0;w.status="Active";w.log.unshift("Mobilization complete. Formation begins the capital-to-frontier route.");events.push(a.name+" mobilized forces from "+a.capital+".")}}
     else if(w.stage==="Border approach"){w.progress=Math.min(100,w.progress+10);u.x=a.lat+(w.frontline[0]-a.lat)*w.progress/100;u.y=a.lon+(w.frontline[1]-a.lon)*w.progress/100;u.status="Moving to frontier";if(w.progress>=100){w.stage="Advance";w.progress=0;u.status="Advancing";w.log.unshift("Formation reached the shared land border.")}
     }else if(w.stage==="Advance"){w.progress=Math.min(100,w.progress+7);u.x=w.frontline[0]+(d.lat-w.frontline[0])*w.progress/100;u.y=w.frontline[1]+(d.lon-w.frontline[1])*w.progress/100;u.status="Advancing";if(w.progress>=100){w.stage="Battle";w.progress=0;u.status="In battle";w.log.unshift("The formation advanced from the border toward the defender's capital region.");events.push(a.name+" entered "+d.name+" in the campaign simulation.")}}
-    else if(w.stage==="Battle"){const attacker=units.find(x=>x.warId===w.id&&x.nationId===a.id),attack=totalPower(units,a.id),defenderIds=[d.id,...s.treaties.filter(t=>t.active&&t.type==="Alliance"&&(t.a===d.id||t.b===d.id)).map(t=>t.a===d.id?t.b:t.a)],defense=defenderIds.reduce((sum,id)=>sum+totalPower(units,id),0),ratio=attack/Math.max(1,defense);w.progress=Math.min(100,w.progress+Math.max(2,Math.round(3+ratio*2)));for(const fighter of units.filter(x=>x.warId===w.id)){if(fighter.status==="In battle")fighter.readiness=Math.max(5,fighter.readiness-(fighter.supply<25?4:2))}if(w.progress>=100){const attackerWins=attack>=defense;w.stage="Occupation";w.sector=attackerWins?3:0;w.status="Ceasefire";if(attackerWins){control[d.id]=a.id;events.push(a.name+" repelled the defenders and captured "+d.name+".")}else{events.push(d.name+" successfully defended its territory and repelled the invading force from "+a.name+".")}if(attacker){attacker.status="At capital";attacker.x=attackerWins?d.lat:a.lat;attacker.y=attackerWins?d.lon:a.lon;attacker.warId=undefined;attacker.targetId=undefined;attacker.progress=0}for(const fighter of units.filter(x=>x.warId===w.id)){fighter.status="At capital";fighter.warId=undefined;fighter.targetId=undefined;fighter.targetX=undefined;fighter.targetY=undefined;fighter.progress=0}w.log.unshift(attackerWins?"Defenders defeated; territory controller changed.":"Defense successful; invading force repelled. A ceasefire was recorded.")}}
+    else if(w.stage==="Battle"){const attacker=units.find(x=>x.warId===w.id&&x.nationId===a.id),attack=totalPower(units,a.id),defenderIds=[d.id,...s.treaties.filter(t=>t.active&&t.type==="Alliance"&&(t.a===d.id||t.b===d.id)).map(t=>t.a===d.id?t.b:t.a)],defense=defenderIds.reduce((sum,id)=>sum+totalPower(units,id),0),ratio=attack/Math.max(1,defense);w.progress=Math.min(100,w.progress+Math.max(5,Math.round(6+Math.min(4,ratio*2))));for(const fighter of units.filter(x=>x.warId===w.id)){if(fighter.status==="In battle")fighter.readiness=Math.max(5,fighter.readiness-(fighter.supply<25?4:2))}if(w.progress>=100||tick-w.started>=80){w.progress=100;const attackerWins=attack>=defense;w.stage="Occupation";w.sector=attackerWins?3:0;w.status="Ceasefire";if(attackerWins){control[d.id]=a.id;events.push(a.name+" repelled the defenders and captured "+d.name+".")}else{events.push(d.name+" successfully defended its territory and repelled the invading force from "+a.name+".")}if(attacker){attacker.status="At capital";attacker.x=attackerWins?d.lat:a.lat;attacker.y=attackerWins?d.lon:a.lon;attacker.warId=undefined;attacker.targetId=undefined;attacker.progress=0}for(const fighter of units.filter(x=>x.warId===w.id)){fighter.status="At capital";fighter.warId=undefined;fighter.targetId=undefined;fighter.targetX=undefined;fighter.targetY=undefined;fighter.progress=0}w.log.unshift(attackerWins?"Defenders defeated; territory controller changed.":"Defense successful; invading force repelled. A ceasefire was recorded.")}}
   }
   if(tick%20===0)events.push("AI world review: national budgets, supply, diplomatic treaties and border security updated.");
-  const trained=trainAI({...s,tick,nations,units,wars,control,credits});
-  return{...s,...trained,tick,nations,units,wars,control,credits,events:[...events,...trained.events].slice(0,40)}
+  const uniqueWars:War[]=[];const activePairs=new Set<string>();for(const w of wars){const key=[w.attacker,w.defender].sort().join(":");if(w.status!=="Ceasefire"&&activePairs.has(key))continue;if(w.status!=="Ceasefire")activePairs.add(key);uniqueWars.push(w)}
+  const trained=trainAI({...s,tick,nations,units,wars:uniqueWars,control,credits});
+  return{...s,...trained,tick,nations,units,wars:uniqueWars,control,credits,events:[...events,...trained.events].slice(0,40)}
 }

@@ -186,3 +186,16 @@
 .war-flag-pair{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:7px}
 .war-flag-pair b{font-size:10px}
 @media(max-width:560px){.country-flag-lg{width:40px;height:27px}.army-list-title b{font-size:10px}}
+
+/* Background music player */
+.music-player{display:flex;align-items:center;gap:14px;padding:10px 14px;margin:0 0 12px;background:#0b1929;border:1px solid #29415a;border-radius:10px;min-width:0}
+.music-meta{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.music-meta small{font:8px 'DM Mono',monospace;letter-spacing:1px;color:#7eb8e2}
+.music-meta b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-meta span{font:8px 'DM Mono',monospace;color:#8096ab}
+.music-controls{display:flex;align-items:center;gap:6px}
+.music-controls button{width:32px;height:30px;border:1px solid #2c455e;border-radius:7px;background:#10243a;color:#dceaf7;font-size:12px}
+.music-controls .music-play{background:#1d5277;border-color:#4a8bb7;color:white;font-size:14px}
+.music-volume{display:flex;align-items:center;gap:6px;font:8px 'DM Mono',monospace;color:#91a6ba;white-space:nowrap}
+.music-volume input{width:68px;accent-color:#62a9d7}
+@media(max-width:560px){.music-player{gap:8px;padding:9px}.music-meta b{font-size:9px}.music-controls{gap:3px}.music-controls button{width:28px;height:28px}.music-volume{gap:3px}.music-volume input{width:48px}}

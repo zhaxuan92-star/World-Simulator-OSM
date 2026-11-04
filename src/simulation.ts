@@ -66,14 +66,16 @@ export const unitTypes=[
 ];
 function makeUnit(n:Nation,index:number):ArmyUnit{const t=unitTypes[index%4];return{id:n.id+"-"+index,nationId:n.id,name:t.name,branch:t.branch,type:t.name,personnel:t.personnel,strength:t.strength,level:1,readiness:65+Math.round(seed(n.id,index)*30),supply:100,x:n.lat,y:n.lon,status:"At capital",progress:0}}
 export function ensureAIState(s:SimState):SimState{
- const base=initialAI(s.nations),seen=new Set<string>(),wars:War[]=[];
+ const knownNations=new Map(nationDatabase.map(n=>[n.id,n]));
+ const nations=(s.nations??[]).map(n=>({...n,flagCode:typeof n.flagCode==="string"?n.flagCode:(knownNations.get(n.id)?.flagCode??"")}));
+ const base=initialAI(nations),seen=new Set<string>(),wars:War[]=[];
  for(const w of [...(s.wars??[])].sort((a,b)=>a.started-b.started)){
    const key=[w.attacker,w.defender].sort().join(":");
    if(w.status!=="Ceasefire"&&seen.has(key))continue;
    if(w.status!=="Ceasefire")seen.add(key);
    wars.push({...w,progress:Math.max(0,Math.min(99,Number(w.progress)||0)),log:Array.isArray(w.log)?w.log:[]});
  }
- return{...s,sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingTick:s.aiLastTrainingTick??0};
+ return{...s,nations,sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingTick:s.aiLastTrainingTick??0};
 }
 export function createInitialState():SimState{const nations=nationDatabase;const control:Record<string,string>={},credits:Record<string,number>={},relations:Record<string,number>={};nations.forEach(n=>{control[n.id]=n.id;credits[n.id]=100});return{tick:0,nations,units:nations.map((n,i)=>makeUnit(n,i)),wars:[],upgrades:{},credits,control,sectorControl:{},relations,treaties:[],...initialAI(nations),aiLastTrainingTick:0,events:["BETA 0.1 initialized: country and capital database loaded.","Land-border adjacency generated from Natural Earth topology.","Each country starts with a national headquarters and one formation."]}}
 export function nationName(s:SimState,id:string){return s.nations.find(n=>n.id===id)?.name??id}

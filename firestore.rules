@@ -6,15 +6,20 @@ service cloud.firestore {
     }
 
     match /players/{playerId} {
-      allow create, read, update: if signedIn()
+      allow create, update: if signedIn()
         && request.auth.uid == playerId
         && request.resource.data.uid == request.auth.uid;
+      allow get, list: if signedIn() && resource.data.uid == request.auth.uid;
       allow delete: if false;
     }
 
     match /worlds/{worldId} {
-      allow create, read, update: if signedIn()
+      allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == request.auth.uid;
+      allow get, list: if signedIn() && resource.data.ownerId == request.auth.uid;
       allow delete: if false;
     }
 

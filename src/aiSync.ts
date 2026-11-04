@@ -1,8 +1,12 @@
 import type { SimState } from "./simulation";
+import { doc, writeBatch, serverTimestamp } from "firebase/firestore";
+import { db, getFirebaseUser } from "./firebase";
 
 const QUEUE_KEY = "world-simulator-ai-training-queue-v1";
 const SESSION_KEY = "world-simulator-ai-session-v1";
 const SENT_KEY = "world-simulator-ai-sent-events-v1";
+const WORLD_KEY = "world-simulator-firebase-world-id-v1";
+
 type TrainingEvent = {
   eventId: string;
   attacker: string;
@@ -41,6 +45,16 @@ function sessionId(): string {
     return id;
   } catch { return "anonymous-session"; }
 }
+function worldId(): string {
+  let id = localStorage.getItem(WORLD_KEY);
+  if (!id) {
+    id = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : "world-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+    localStorage.setItem(WORLD_KEY, id);
+  }
+  return id;
+}
 export function queueCompletedCampaigns(state: SimState) {
   const queue = readQueue();
   let sent: string[] = [];
@@ -78,24 +92,56 @@ export function pendingTrainingBatches(): number {
 export async function flushTrainingQueue(): Promise<boolean> {
   const queue = readQueue();
   if (!queue.length) return true;
-  const batch = queue[0];
+  const batchData = queue[0];
   try {
-    const response = await fetch("/api/ai-training", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(batch),
-      keepalive: true
-    });
-    if (!response.ok) return false;
+    const user = await getFirebaseUser();
+    const batch = writeBatch(db);
+    const world = worldId();
+    const playerRef = doc(db, "players", user.uid);
+    const worldRef = doc(db, "worlds", world);
+
+    batch.set(playerRef, {
+      uid: user.uid,
+      username: "Anonymous player",
+      status: "active",
+      authProvider: "anonymous",
+      lastSeenAt: serverTimestamp()
+    }, { merge: true });
+
+    batch.set(worldRef, {
+      worldId: world,
+      worldName: "World Simulator world",
+      ownerId: user.uid,
+      status: "active",
+      lastUpdatedAt: serverTimestamp()
+    }, { merge: true });
+
+    for (const event of batchData.events) {
+      const eventDocId = (user.uid + "_" + event.eventId).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 1400);
+      batch.set(doc(db, "ai_training", eventDocId), {
+        ...event,
+        worldId: world,
+        playerId: user.uid,
+        sessionId: batchData.sessionId,
+        batchId: batchData.batchId,
+        createdAt: serverTimestamp(),
+        schemaVersion: 1
+      }, { merge: true });
+    }
+
+    await batch.commit();
     saveQueue(queue.slice(1));
+    try {
+      const sent = JSON.parse(localStorage.getItem(SENT_KEY) || "[]") as string[];
+      localStorage.setItem(SENT_KEY, JSON.stringify([...sent, ...batchData.events.map(event => event.eventId)].slice(-500)));
+    } catch {}
     return true;
-  } catch { return false; }
+  } catch (error) {
+    console.warn("Firebase AI training sync failed; keeping local queue.", error);
+    return false;
+  }
 }
 export function sendPendingOnExit() {
-  const queue = readQueue();
-  if (!queue.length || typeof navigator === "undefined" || !navigator.sendBeacon) return;
-  try {
-    const payload = new Blob([JSON.stringify(queue[0])], { type: "application/json" });
-    navigator.sendBeacon("/api/ai-training", payload);
-  } catch {}
+  // Firestore writes require an authenticated SDK session. The 15-second
+  // foreground sync is the reliable path; keep queued events for the next visit.
 }

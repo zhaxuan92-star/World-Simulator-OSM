@@ -148,7 +148,7 @@ export function sendPendingOnExit() {
 }
 
 
-export async function saveWorldSnapshot(state: SimState): Promise<boolean> {
+export async function saveWorldSnapshot(state: SimState, economySnapshot?: unknown): Promise<boolean> {
   try {
     const user = await getFirebaseUser();
     const world = worldId(user.uid);
@@ -160,6 +160,7 @@ export async function saveWorldSnapshot(state: SimState): Promise<boolean> {
       status: "active",
       tick: state.tick,
       gameState: state,
+      ...(economySnapshot===undefined?{}:{economySnapshot}),
       lastUpdatedAt: serverTimestamp(),
       schemaVersion: 1
     }, { merge: true });
@@ -183,6 +184,22 @@ export async function loadWorldSnapshot(): Promise<SimState | null> {
     return docs.length ? docs[0].gameState as SimState : null;
   } catch (error) {
     console.warn("World cloud load failed", error);
+    return null;
+  }
+}
+
+
+export async function loadWorldEconomySnapshot(): Promise<unknown | null> {
+  try {
+    const user = await getFirebaseUser();
+    const q = query(collection(db, "worlds"), where("ownerId", "==", user.uid));
+    const result = await getDocs(q);
+    const docs = result.docs.map(item => item.data())
+      .filter(data => data.gameState && typeof data.gameState.tick === "number")
+      .sort((a, b) => (b.lastUpdatedAt?.toMillis?.() ?? 0) - (a.lastUpdatedAt?.toMillis?.() ?? 0));
+    return docs.length ? docs[0].economySnapshot ?? null : null;
+  } catch (error) {
+    console.warn("Cloud economy load failed", error);
     return null;
   }
 }

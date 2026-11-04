@@ -7,7 +7,10 @@
     "version": "2.1.4",
     "channel": "alpha",
     "build_label": "Alpha 2.1.4",
-    "platforms": ["web", "android-browser"],
+    "platforms": [
+      "web",
+      "android-browser"
+    ],
     "entry": "/",
     "repository": "https://github.com/zhaxuan92-star/World-Simulator-OSM"
   },
@@ -25,5 +28,14 @@
       "background_usage": false
     },
     "notes": "This Vzc© file is a release descriptor/manifest, not a standalone executable or compiled APK."
+  },
+  "copyright": {
+    "notice": "Copyright © 2026 Vzc Corporation. All rights reserved.",
+    "rights_holder": "Vzc Corporation",
+    "work": "World Simulator",
+    "release": "Alpha 2.1.4",
+    "notice_file": "legal/WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md",
+    "third_party_exclusions": "Third-party libraries, map datasets, map tiles, flags, external services and user-submitted content remain subject to their respective rights and licences.",
+    "legal_status": "Publisher copyright notice; not a government registration certificate."
   }
 }

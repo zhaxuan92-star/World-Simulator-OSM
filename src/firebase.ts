@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signInAnonymously, type User } from "firebase/auth";
+import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, type User } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -26,4 +26,26 @@ export function getFirebaseUser(): Promise<User> {
     });
   }
   return authPromise;
+}
+
+
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
+
+export async function signInWithGoogle(): Promise<User> {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error: any) {
+    // Mobile browsers may block popups; redirect is the supported fallback.
+    if (error?.code === "auth/popup-blocked" || error?.code === "auth/operation-not-supported-in-this-environment") {
+      await signInWithRedirect(auth, googleProvider);
+    }
+    throw error;
+  }
+}
+
+export async function completeGoogleRedirect(): Promise<User | null> {
+  const result = await getRedirectResult(auth);
+  return result?.user ?? auth.currentUser;
 }

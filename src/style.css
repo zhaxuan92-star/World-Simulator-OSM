@@ -50,3 +50,9 @@
 /* Beta 0.3: autonomous national flag markers */
 .army-flag-icon{background:transparent!important;border:0!important;display:grid;place-items:center;}
 .army-flag-icon span{box-sizing:border-box;display:grid;place-items:center;width:25px;height:25px;border:1px solid #dce8f2;border-radius:3px;background:#101a27;font-size:18px;line-height:1;box-shadow:0 1px 4px #000b;transform:translateZ(0);}
+
+/* Beta 0.3.3 terrain presentation and tactical contact markers */
+.leaflet-container{background:#152b3a;}
+.leaflet-tile{filter:saturate(1.13) contrast(1.04);}
+.leaflet-overlay-pane svg{filter:drop-shadow(0 1px 1px #07111f88);}
+.army-flag-icon span{border:2px solid #f0f5fa;border-radius:4px;box-shadow:0 0 0 1px #14283b,0 2px 7px #000c;}

@@ -100,6 +100,24 @@ export function declareWar(s:SimState,attackerId:string,defenderId:string,godMod
 }
 export function signTreaty(s:SimState,a:string,b:string,type:Treaty["type"]):SimState{if(a===b||s.control[a]!==a||s.control[b]!==b)return s;const key=relationKey(a,b);if(s.treaties.some(t=>t.active&&relationKey(t.a,t.b)===key&&t.type===type))return s;const treaty:Treaty={id:key+":"+type+":"+s.tick,a,b,type,created:s.tick,active:true};const delta=type==="Alliance"?25:type==="Non-aggression"?18:12;return{...s,treaties:[...s.treaties,treaty],relations:{...s.relations,[key]:Math.min(100,(s.relations[key]??0)+delta)},events:[type+" treaty signed: "+nationName(s,a)+" and "+nationName(s,b)+".",...s.events].slice(0,30)}}
 export function advanceWorld(s:SimState):SimState{const tick=s.tick+1,units=s.units.map(u=>({...u})),wars=s.wars.map(w=>({...w,log:[...w.log]})),control={...s.control},sectorControl={...(s.sectorControl??{})},credits={...s.credits},events:string[]=[],nations=s.nations.map(n=>{const capacity=Math.max(1_500_000,n.populationCapacity||n.population*1.5),terrainFactor=Math.max(.35,Math.min(1.5,capacity/Math.max(1_000_000,n.population))),growth=n.population<capacity?Math.max(1,Math.round(n.population*.00008*terrainFactor)):0,population=Math.min(capacity,n.population+growth);return{...n,population,budget:Math.max(1,Math.round(population/1_000_000*.012))}});
+  // Peaceful migration: small population flows toward stable neighboring countries with spare capacity.
+  const atWar=new Set(wars.filter(w=>w.status!=="Ceasefire").flatMap(w=>[w.attacker,w.defender]));
+  const migration:Record<string,number>={};
+  for(const origin of nations){
+    if(atWar.has(origin.id))continue;
+    const destination=origin.neighbors.map(id=>nations.find(n=>n.id===id))
+      .filter((n):n is Nation=>!!n&&!atWar.has(n.id)&&n.stability>=origin.stability+8&&n.population<n.populationCapacity)
+      .sort((a,b)=>b.stability-a.stability)[0];
+    if(!destination)continue;
+    const people=Math.min(Math.max(1,Math.floor(origin.population*0.0000005)),Math.max(0,destination.populationCapacity-destination.population));
+    if(people<=0)continue;
+    migration[origin.id]=(migration[origin.id]??0)-people;
+    migration[destination.id]=(migration[destination.id]??0)+people;
+  }
+  for(const n of nations){
+    n.population=Math.max(1000,Math.min(n.populationCapacity,n.population+(migration[n.id]??0)));
+    n.budget=Math.max(1,Math.round(n.population/1_000_000*0.012));
+  }
   // Passive economy and supply recovery: group units once to avoid repeated full-array scans.
   const unitsByNation=new Map<string,ArmyUnit[]>();for(const u of units){const group=unitsByNation.get(u.nationId);if(group)group.push(u);else unitsByNation.set(u.nationId,[u])}
   for(const n of nations){credits[n.id]=Math.min(500,(credits[n.id]??0)+Math.max(1,Math.round(n.budget/30)));for(const u of unitsByNation.get(n.id)??[])if(u.status==="At capital")u.supply=Math.min(100,u.supply+2+(s.upgrades[n.id+":logistics"]??0))}

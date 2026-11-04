@@ -170,3 +170,19 @@
 .army-flag-icon span{display:block;width:24px;height:16px;background:#8795a5;border:1px solid white}
 @media(max-width:850px){.game-layout{grid-template-columns:1fr}.nation-card{display:grid;grid-template-columns:1fr 1fr;align-items:start}.card-heading{grid-column:1/-1}.country-search,.country-select{grid-column:1/-1}.nation-buttons{grid-column:1/-1}.gate-points{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.new-gate{padding:13px}.gate-center{margin:48px auto 36px}.gate-center h1{font-size:43px}.gate-center>p{font-size:11px}.gate-points{grid-template-columns:1fr 1fr}.game-ui{padding:7px}.game-top{align-items:flex-start}.mini-brand b{font-size:10px}.mini-brand small{font-size:7px}.top-actions{justify-content:flex-end}.top-actions button{font-size:8px;padding:8px}.user-chip{display:none}.quick-stats{gap:5px}.quick-stats>div{padding:8px}.quick-stats small{font-size:7px}.quick-stats b{font-size:12px}.map-area{height:48vh;min-height:290px}.nation-card{display:block}.action-dock{grid-template-columns:repeat(3,1fr);gap:5px}.action-dock button{padding:10px 4px;font-size:9px}.command-panel{padding:10px}.overview-grid{grid-template-columns:1fr 1fr}.data-list{grid-template-columns:1fr}.research-grid{grid-template-columns:1fr 1fr}.inline-controls{flex-wrap:wrap}.inline-controls select{flex-basis:100%;width:100%}.inline-controls button{flex:1}.new-footer,.game-footer{font-size:7px}.game-footer{flex-wrap:wrap}}
+
+/* National flag integration */
+.country-flag{display:inline-block;object-fit:cover;aspect-ratio:4/3;border-radius:2px;border:1px solid #ffffff35;background:#172638;flex:none;box-shadow:0 1px 3px #0006}
+.country-flag-sm{width:22px;height:15px}
+.country-flag-md{width:30px;height:20px}
+.country-flag-lg{width:48px;height:32px}
+.nation-title{display:flex;align-items:center;gap:12px;min-width:0}
+.nation-title h2{overflow-wrap:anywhere}
+.army-flag-icon{background:transparent;border:0}
+.army-flag-icon img{display:block;width:30px;height:20px;object-fit:cover;border:1px solid #fff8;border-radius:2px;box-shadow:0 1px 4px #0008}
+.army-flag-icon .flag-missing{display:block;color:#fff;background:#24384d;width:30px;height:20px;text-align:center}
+.army-list-item .army-list-title{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.army-list-title b{font-size:11px}
+.war-flag-pair{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:7px}
+.war-flag-pair b{font-size:10px}
+@media(max-width:560px){.country-flag-lg{width:40px;height:27px}.army-list-title b{font-size:10px}}

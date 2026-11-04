@@ -11,3 +11,5 @@
 @media(max-width:430px){.upgrade-grid{grid-template-columns:1fr}.unit-item{gap:7px;padding:8px}.unit-main b{font-size:9px}.unit-power{font-size:9px}}
 
 .treaty-action{margin:10px 8px 0 0;padding:9px 12px;border:1px solid #3b6d91;background:#14324a;color:#e8f4ff;border-radius:7px;font:9px 'DM Mono',monospace;cursor:pointer}.treaty-action:disabled,.upgrade-card button:disabled{opacity:.4;cursor:not-allowed}.campaign-card small{line-height:1.6}.map-legend span{white-space:nowrap}
+
+.map-control-upload{border:1px solid #2b4058;background:#102238;color:#cbd8e6;border-radius:6px;padding:7px 10px;font:11px 'DM Mono',monospace;cursor:pointer}.map-control-upload:hover{background:#1b4261;border-color:#4d8dbd;color:#fff}.subpanel input[type=range]{width:100%;accent-color:#55a6d9;cursor:pointer}.map-control-upload input{display:none}

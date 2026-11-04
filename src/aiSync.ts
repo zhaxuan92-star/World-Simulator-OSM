@@ -45,8 +45,9 @@ function sessionId(): string {
     return id;
   } catch { return "anonymous-session"; }
 }
-function worldId(): string {
-  let id = localStorage.getItem(WORLD_KEY);
+function worldId(uid: string): string {
+  const key = WORLD_KEY + ":" + uid;
+  let id = localStorage.getItem(key);
   if (!id) {
     id = typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()

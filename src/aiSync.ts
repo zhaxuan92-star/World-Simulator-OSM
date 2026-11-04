@@ -1,5 +1,5 @@
 import type { SimState } from "./simulation";
-import { doc, writeBatch, serverTimestamp } from "firebase/firestore";
+import { doc, writeBatch, serverTimestamp, setDoc } from "firebase/firestore";
 import { db, getFirebaseUser } from "./firebase";
 
 const QUEUE_KEY = "world-simulator-ai-training-queue-v1";
@@ -152,7 +152,7 @@ export async function saveWorldSnapshot(state: SimState): Promise<boolean> {
     const user = await getFirebaseUser();
     const world = worldId(user.uid);
     const worldRef = doc(db, "worlds", world);
-    await (await import("firebase/firestore")).setDoc(worldRef, {
+    await setDoc(worldRef, {
       worldId: world,
       worldName: "World Simulator",
       ownerId: user.uid,

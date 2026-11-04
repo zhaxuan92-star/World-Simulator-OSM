@@ -1,5 +1,5 @@
 import type { SimState } from "./simulation";
-import { doc, writeBatch, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, writeBatch, serverTimestamp, setDoc, getDocs, collection, query, where } from "firebase/firestore";
 import { db, getFirebaseUser } from "./firebase";
 
 const QUEUE_KEY = "world-simulator-ai-training-queue-v1";
@@ -167,5 +167,22 @@ export async function saveWorldSnapshot(state: SimState): Promise<boolean> {
   } catch (error) {
     console.warn("World cloud save failed", error);
     return false;
+  }
+}
+
+
+export async function loadWorldSnapshot(): Promise<SimState | null> {
+  try {
+    const user = await getFirebaseUser();
+    const q = query(collection(db, "worlds"), where("ownerId", "==", user.uid));
+    const result = await getDocs(q);
+    const docs = result.docs
+      .map(item => item.data())
+      .filter(data => data.gameState && typeof data.gameState.tick === "number")
+      .sort((a, b) => (b.lastUpdatedAt?.toMillis?.() ?? 0) - (a.lastUpdatedAt?.toMillis?.() ?? 0));
+    return docs.length ? docs[0].gameState as SimState : null;
+  } catch (error) {
+    console.warn("World cloud load failed", error);
+    return null;
   }
 }

@@ -1,8 +1,13 @@
-# World Simulator OSM — Beta 0.1
+# World Simulator OSM — Official Main Release
 
 Spectator-first global strategy simulation. Every country is controlled by deterministic autonomous rules; the visitor observes, pauses, and adjusts simulation speed.
 
-## Beta 0.1 features
+## Official release entry
+- Added a launch screen: the simulation does not start ticking until the visitor presses **Enter Beta**.
+- Added **Create New World** to reset the local simulation and **Enter Beta** to continue the browser's saved world.
+- Preview build is deployed on a unique Vercel Preview URL, not the production alias.
+
+## Beta 0.1 simulation features
 - Global OpenStreetMap basemap and Natural Earth country outlines.
 - Country database with capital coordinates, population estimates, and land-border adjacency.
 - Capital headquarters and recruitable army, air force, navy, and logistics formations.
@@ -25,6 +30,9 @@ npm run dev
 npm run build
 ```
 
+## Access and privacy note
+- The launch screen is an intentional entry step, not authentication. Anyone who obtains the Preview URL can open it. Do not distribute the URL publicly if the test should remain small; a true invite-only gate requires server-side authentication or Vercel Deployment Protection.
+
 ## Important Beta 0.1 limitations
 - The campaign has abstract phases, not real administrative provinces. A successful campaign changes the controller of the whole country polygon; there is no province-by-province occupation or detailed front-line geometry yet.
 - The capital-to-border route is a simplified straight-line route to a shared-border point, not a road/pathfinding network.
@@ -41,3 +49,11 @@ npm run build
 
 ## License
 Application source: MIT.
+
+
+## Official release additions
+- Civilian economy panel with GDP estimates, treasury, tax policy, employment estimate, and resource stocks.
+- Versioned `.worldsave` import/export for local backups.
+- Local browser economy persistence.
+- Firebase sign-in, private cloud world snapshots, and queued AI training-event synchronization. Firebase Authentication providers and Firestore rules must be configured in the Firebase console before cloud features are available.
+- Official deployment is built from the `main` branch.

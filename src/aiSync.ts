@@ -43,7 +43,9 @@ function sessionId(): string {
 }
 export function queueCompletedCampaigns(state: SimState) {
   const queue = readQueue();
-  let sent: string[] = [];\n  try { sent = JSON.parse(localStorage.getItem(SENT_KEY) || "[]"); } catch {}\n  const known = new Set([...sent, ...queue.flatMap(batch => batch.events.map(event => event.eventId))]);
+  let sent: string[] = [];
+  try { sent = JSON.parse(localStorage.getItem(SENT_KEY) || "[]"); } catch {}
+  const known = new Set([...sent, ...queue.flatMap(batch => batch.events.map(event => event.eventId))]);
   const completed = state.wars.filter(w => w.status === "Ceasefire" && w.log.includes("champion-evaluated") && !known.has(w.id));
   if (!completed.length) return;
   const events = completed.slice(0, 40).map(w => {

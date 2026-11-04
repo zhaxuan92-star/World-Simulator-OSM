@@ -2,6 +2,7 @@ import type { SimState } from "./simulation";
 
 const QUEUE_KEY = "world-simulator-ai-training-queue-v1";
 const SESSION_KEY = "world-simulator-ai-session-v1";
+const SENT_KEY = "world-simulator-ai-sent-events-v1";
 type TrainingEvent = {
   eventId: string;
   attacker: string;
@@ -42,7 +43,7 @@ function sessionId(): string {
 }
 export function queueCompletedCampaigns(state: SimState) {
   const queue = readQueue();
-  const known = new Set(queue.flatMap(batch => batch.events.map(event => event.eventId)));
+  let sent: string[] = [];\n  try { sent = JSON.parse(localStorage.getItem(SENT_KEY) || "[]"); } catch {}\n  const known = new Set([...sent, ...queue.flatMap(batch => batch.events.map(event => event.eventId))]);
   const completed = state.wars.filter(w => w.status === "Ceasefire" && w.log.includes("champion-evaluated") && !known.has(w.id));
   if (!completed.length) return;
   const events = completed.slice(0, 40).map(w => {

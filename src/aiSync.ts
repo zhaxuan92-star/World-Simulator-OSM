@@ -51,7 +51,7 @@ function worldId(): string {
     id = typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : "world-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
-    localStorage.setItem(WORLD_KEY, id);
+    localStorage.setItem(key, id);
   }
   return id;
 }
@@ -96,7 +96,7 @@ export async function flushTrainingQueue(): Promise<boolean> {
   try {
     const user = await getFirebaseUser();
     const batch = writeBatch(db);
-    const world = worldId();
+    const world = worldId(user.uid);
     const playerRef = doc(db, "players", user.uid);
     const worldRef = doc(db, "worlds", world);
 
@@ -144,4 +144,27 @@ export async function flushTrainingQueue(): Promise<boolean> {
 export function sendPendingOnExit() {
   // Firestore writes require an authenticated SDK session. The 15-second
   // foreground sync is the reliable path; keep queued events for the next visit.
+}
+
+
+export async function saveWorldSnapshot(state: SimState): Promise<boolean> {
+  try {
+    const user = await getFirebaseUser();
+    const world = worldId(user.uid);
+    const worldRef = doc(db, "worlds", world);
+    await (await import("firebase/firestore")).setDoc(worldRef, {
+      worldId: world,
+      worldName: "World Simulator",
+      ownerId: user.uid,
+      status: "active",
+      tick: state.tick,
+      gameState: state,
+      lastUpdatedAt: serverTimestamp(),
+      schemaVersion: 1
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.warn("World cloud save failed", error);
+    return false;
+  }
 }

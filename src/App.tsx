@@ -31,7 +31,8 @@ function Flag({code,label,size="md"}:{code:string;label?:string;size?:"sm"|"md"|
 
 export default function App(){
  const [state,setState]=useState<SimState>(loadState),stateRef=useRef(state);stateRef.current=state;
- const [user,setUser]=useState(auth.currentUser),[authBusy,setAuthBusy]=useState(false),[authMessage,setAuthMessage]=useState("");\n const [musicIndex,setMusicIndex]=useState(0),[musicPlaying,setMusicPlaying]=useState(false),[musicVolume,setMusicVolume]=useState(0.28);const musicRef=useRef<HTMLAudioElement|null>(null);
+ const [user,setUser]=useState(auth.currentUser),[authBusy,setAuthBusy]=useState(false),[authMessage,setAuthMessage]=useState("");
+ const [musicIndex,setMusicIndex]=useState(0),[musicPlaying,setMusicPlaying]=useState(false),[musicVolume,setMusicVolume]=useState(0.28);const musicRef=useRef<HTMLAudioElement|null>(null);
  const [entered,setEntered]=useState(false),[selected,setSelected]=useState("840"),[target,setTarget]=useState("156"),[tab,setTab]=useState<"overview"|"army"|"war"|"diplomacy"|"research"|"ai">("overview");
  const [query,setQuery]=useState(""),[unitType,setUnitType]=useState(0),[speed,setSpeed]=useState(1),[paused,setPaused]=useState(false),[godMode,setGodMode]=useState(true),[saveStatus,setSaveStatus]=useState("Đang chờ lưu"),[syncStatus,setSyncStatus]=useState("Đang chờ đồng bộ");
  const topo=worldData as any;

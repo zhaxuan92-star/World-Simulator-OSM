@@ -56,3 +56,25 @@
 .leaflet-tile{filter:saturate(1.13) contrast(1.04);}
 .leaflet-overlay-pane svg{filter:drop-shadow(0 1px 1px #07111f88);}
 .army-flag-icon span{border:2px solid #f0f5fa;border-radius:4px;box-shadow:0 0 0 1px #14283b,0 2px 7px #000c;}
+
+/* Official refresh: compact mobile-first controls and image-based national flags */
+.army-flag-icon{background:transparent!important;border:0!important;display:grid;place-items:center}
+.army-flag-icon img{display:block;width:28px;height:19px;object-fit:cover;border:1.5px solid #fff;border-radius:2px;box-shadow:0 1px 5px #000b}
+.flag-fallback{display:block;width:24px;height:16px;background:#8795a5;border:1px solid #fff}
+.gate-actions .gate-primary:disabled{opacity:.65;cursor:wait}
+.gate-actions .gate-primary:first-child{background:#f3f7fc;color:#12243a;border:1px solid #91a8c0;box-shadow:none}
+.gate-actions .gate-primary:nth-child(2){background:#286a9b;color:#fff}
+.gate-note{overflow-wrap:anywhere}
+@media(max-width:560px){
+ .shell{padding:8px}
+ .topbar{position:sticky;top:0;z-index:900;background:#07111fee;backdrop-filter:blur(12px);padding:7px 4px;height:auto;min-height:50px}
+ .statusbar{position:sticky;top:50px;z-index:800;background:#07111f;padding:7px 0}
+ .map-wrap{height:54vh;min-height:300px;max-height:520px}
+ .map-controls{gap:7px;padding:9px}
+ .map-controls button,.speed-control button{padding:8px 10px}
+ .system-tabs{position:sticky;top:106px;z-index:700;background:#0b1929;padding-top:8px}
+ .system-tabs button{min-height:38px}
+ .design-panel{margin-top:8px}
+ .system-content{padding:9px}
+ .recruit-row button,.treaty-action,.upgrade-card button{min-height:38px}
+}

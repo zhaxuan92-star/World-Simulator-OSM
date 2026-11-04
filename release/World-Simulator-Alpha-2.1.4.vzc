@@ -1,0 +1,29 @@
+{
+  "format": "Vzc©",
+  "format_version": 1,
+  "package_type": "world-simulator-game-release",
+  "game": {
+    "name": "World Simulator",
+    "version": "2.1.4",
+    "channel": "alpha",
+    "build_label": "Alpha 2.1.4",
+    "platforms": ["web", "android-browser"],
+    "entry": "/",
+    "repository": "https://github.com/zhaxuan92-star/World-Simulator-OSM"
+  },
+  "release": {
+    "features": [
+      "compact command interface",
+      "warfare doctrines: conventional, guerrilla, blitzkrieg, attrition, deep defense, amphibious",
+      "continuous frontline advance without fixed three-sector occupation",
+      "optional network relay and local AI resource consent prompt"
+    ],
+    "resource_sharing": {
+      "default": "disabled",
+      "network_relay": "consent-record-only; relay service not configured",
+      "local_compute": "consent-record-only; compute worker not configured",
+      "background_usage": false
+    },
+    "notes": "This Vzc© file is a release descriptor/manifest, not a standalone executable or compiled APK."
+  }
+}

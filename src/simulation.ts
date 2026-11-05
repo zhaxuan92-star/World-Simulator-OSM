@@ -2,7 +2,7 @@ import worldCountries from "world-countries";
 import topoData from "world-atlas/countries-110m.json";
 
 export type Nation={id:string;name:string;capital:string;lat:number;lon:number;neighbors:string[];color:string;flag:string;flagCode:string;population:number;populationCapacity:number;budget:number;aggression:number;diplomacy:number;stability:number};
-export type ArmyUnit={id:string;nationId:string;name:string;branch:"Army"|"Air Force"|"Navy"|"Logistics";type:string;personnel:number;strength:number;level:number;readiness:number;supply:number;x:number;y:number;status:"At capital"|"Moving to frontier"|"Advancing"|"In battle"|"Patrolling";progress:number;targetId?:string;warId?:string;targetX?:number;targetY?:number;nextMoveAt?:number};
+export type ArmyUnit={recruitedAt?:number;id:string;nationId:string;name:string;branch:"Army"|"Air Force"|"Navy"|"Logistics";type:string;personnel:number;strength:number;level:number;readiness:number;supply:number;x:number;y:number;status:"At capital"|"Moving to frontier"|"Advancing"|"In battle"|"Patrolling";progress:number;targetId?:string;warId?:string;targetX?:number;targetY?:number;nextMoveAt?:number};
 export type War={id:string;attacker:string;defender:string;doctrine?:"conventional"|"guerrilla"|"blitzkrieg"|"attrition"|"deep-defense"|"amphibious";origin?:[number,number];status:"Mobilizing"|"Active"|"Ceasefire";stage:"Mobilizing"|"Border approach"|"Advance"|"Battle"|"Occupation";progress:number;started:number;frontline:[number,number];sector:number;log:string[]};
 export type Treaty={id:string;a:string;b:string;type:"Non-aggression"|"Alliance"|"Trade";created:number;active:boolean};
 export type AIStrategy={id:string;name:string;generation:number;aggression:number;defense:number;logistics:number;diplomacy:number;risk:number;score:number;wins:number;losses:number;games:number};
@@ -68,14 +68,14 @@ function makeUnit(n:Nation,index:number):ArmyUnit{const t=unitTypes[index%4];ret
 export function ensureAIState(s:SimState):SimState{
  const knownNations=new Map(nationDatabase.map(n=>[n.id,n]));
  const nations=(s.nations??[]).map(n=>({...n,flagCode:typeof n.flagCode==="string"?n.flagCode:(knownNations.get(n.id)?.flagCode??"")}));
- const base=initialAI(nations),seen=new Set<string>(),wars:War[]=[];
+ const base=initialAI(nations),seen=new Set<string>(),wars:War[]=[],legacy=s as SimState & {tick?:number;aiLastTrainingTick?:number};
  for(const w of [...(s.wars??[])].sort((a,b)=>a.started-b.started)){
    const key=[w.attacker,w.defender].sort().join(":");
    if(w.status!=="Ceasefire"&&seen.has(key))continue;
    if(w.status!=="Ceasefire")seen.add(key);
    wars.push({...w,origin:w.origin??w.frontline,progress:Math.max(0,Math.min(99,Number(w.progress)||0)),log:Array.isArray(w.log)?w.log:[]});
  }
- return{...s,nations,sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingAt:Number.isFinite(s.aiLastTrainingAt)?s.aiLastTrainingAt:0};
+ const {tick:_oldTick,aiLastTrainingTick:_oldTraining,...clean}=legacy;return{...clean,elapsedSeconds:Number.isFinite(s.elapsedSeconds)?s.elapsedSeconds:Math.max(0,Number(_oldTick)||0),nations,sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingAt:Number.isFinite(s.aiLastTrainingAt)?s.aiLastTrainingAt:Math.max(0,Number(_oldTraining)||0)};
 }
 export function createInitialState():SimState{const nations=nationDatabase;const control:Record<string,string>={},credits:Record<string,number>={},relations:Record<string,number>={};nations.forEach(n=>{control[n.id]=n.id;credits[n.id]=100});return{elapsedSeconds:0,nations,units:nations.map((n,i)=>makeUnit(n,i)),wars:[],upgrades:{},credits,control,sectorControl:{},relations,treaties:[],...initialAI(nations),aiLastTrainingAt:0,events:["OFFICIAL WORLD INITIALIZED: country and capital database loaded.","Land-border adjacency generated from Natural Earth topology.","Each country starts with a national headquarters and one formation."]}}
 export function nationName(s:SimState,id:string){return s.nations.find(n=>n.id===id)?.name??id}
@@ -118,7 +118,8 @@ export function advanceWorld(s:SimState,deltaSeconds=1):SimState{const dt=Math.m
     n.population=Math.max(1000,Math.min(n.populationCapacity,n.population+(migration[n.id]??0)));
     n.budget=Math.max(1,Math.round(n.population/1_000_000*0.012));
   }
-  // Autonomous force generation: recruit a formation when manpower, treasury and infrastructure permit.\n  for(const n of nations){const owned=units.filter(u=>u.nationId===n.id);const cap=Math.max(1,Math.min(40,Math.floor(n.population/250000)));const last=owned.reduce((v,u)=>Math.max(v,Number(u.recruitedAt??0)),0);if(owned.length<cap&&clock-last>=30&&(credits[n.id]??0)>=20&&n.population>100000){const fresh=makeUnit(n,owned.length+Math.floor(clock/30));fresh.id=n.id+"-auto-"+Math.floor(clock);(fresh as any).recruitedAt=clock;units.push(fresh);credits[n.id]-=20;events.push(n.name+" raised a new formation through its standing recruitment system.");}}\n  // Passive economy and supply recovery: group units once to avoid repeated full-array scans.
+  // Autonomous force generation: recruit a formation when manpower, treasury and infrastructure permit.
+  for(const n of nations){const owned=units.filter(u=>u.nationId===n.id);const cap=Math.max(1,Math.min(40,Math.floor(n.population/250000)));const last=owned.reduce((v,u)=>Math.max(v,Number(u.recruitedAt??0)),0);if(owned.length<cap&&clock-last>=30&&(credits[n.id]??0)>=20&&n.population>100000){const fresh=makeUnit(n,owned.length+Math.floor(clock/30));fresh.id=n.id+"-auto-"+Math.floor(clock);fresh.recruitedAt=clock;units.push(fresh);credits[n.id]-=20;events.push(n.name+" raised a new formation through its standing recruitment system.");}}\n  // Passive economy and supply recovery: group units once to avoid repeated full-array scans.
   const unitsByNation=new Map<string,ArmyUnit[]>();for(const u of units){const group=unitsByNation.get(u.nationId);if(group)group.push(u);else unitsByNation.set(u.nationId,[u])}
   for(const n of nations){credits[n.id]=Math.min(500,(credits[n.id]??0)+Math.max(0.05,n.budget/30)*dt);for(const u of unitsByNation.get(n.id)??[])if(u.status==="At capital")u.supply=Math.min(100,u.supply+(2+(s.upgrades[n.id+":logistics"]??0))*dt)}
   // Peacetime patrols stay on home territory: they move toward a border staging point, never a foreign capital.

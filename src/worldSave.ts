@@ -41,7 +41,7 @@ export function parseWorldSave(raw:string):WorldSave {
   const economy=save.economy?normalizeEconomy(save.economy,normalized.nations,normalized.credits):undefined;
   return {
     format:WORLD_SAVE_FORMAT,version:WORLD_SAVE_VERSION,savedAt:typeof save.savedAt==="string"?save.savedAt:new Date().toISOString(),
-    gameVersion:"Official 2.3.0",state:normalized,...(economy?{economy}:{})
+    gameVersion:"Official RTS 3.0.0",state:normalized,...(economy?{economy}:{})
   };
 }
 

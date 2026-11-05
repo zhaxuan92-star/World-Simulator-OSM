@@ -1,59 +1,44 @@
-# World Simulator OSM — Official Main Release
+# World Simulator OSM — Official Release
 
-Spectator-first global strategy simulation. Every country is controlled by deterministic autonomous rules; the visitor observes, pauses, and adjusts simulation speed.
+World Simulator is a browser-based global strategy sandbox. It simulates sovereign countries, borders, autonomous governments, military campaigns, diplomacy, research, and a civilian economy.
 
-## Official release entry
-- Added a launch screen: the simulation does not start ticking until the visitor presses **Enter Beta**.
-- Added **Create New World** to reset the local simulation and **Enter Beta** to continue the browser's saved world.
-- Preview build is deployed on a unique Vercel Preview URL, not the production alias.
+## Official production
+- Production branch: `main`
+- Production website: https://world-simulator-osm-vzcapps.vercel.app
+- Release line: Official 2.3.0
+- Mobile-first responsive layout; designed to remain usable on Android browsers.
 
-## Beta 0.1 simulation features
-- Global OpenStreetMap basemap and Natural Earth country outlines.
-- Country database with capital coordinates, population estimates, and land-border adjacency.
-- Capital headquarters and recruitable army, air force, navy, and logistics formations.
-- Unit readiness, supply consumption, recovery, recruitment costs, national credits, and five upgrade tracks.
-- Autonomous conflict selection restricted to adjacent independent countries; non-aggression and alliance treaties prevent a declaration between signatories.
-- Multi-stage campaign: mobilization → capital-to-border movement → border-to-capital advance → abstract battle → country-level control transfer.
-- Map route and moving unit markers; country polygons recolor when territorial controller changes.
-- Bilateral non-aggression, alliance, and trade treaties with relationship scores.
-- Browser localStorage auto-save, pause/resume, and 1×/2×/5×/10× simulation speed.
-- Responsive mobile interface.
+## Official 2.3.0 overhaul
+- Corrected campaign advance pacing so frontline progress is not applied twice in one simulation tick.
+- Reworked economic state validation and migration. Population in the economy now follows the simulation engine's national population as the single source of truth.
+- Added safe normalization for legacy or partial economy saves, resource inventories, treasury, tax rates, and productivity.
+- Added import limits and structural validation for world-save files; old version 1 saves remain importable and are upgraded to the current save format.
+- Improved save-file URL cleanup and delayed local persistence slightly to avoid writing the entire world to localStorage on every render tick.
+- Updated official version branding and initialization event text.
 
-## Run locally
+## Existing simulation systems
+- Natural Earth country geometry and land-border adjacency.
+- Autonomous national AI profiles and evolutionary strategy candidates.
+- Army, air force, navy, and logistics formations.
+- Recruitment, upgrades, readiness, supply, campaign stages, territorial control, and ceasefires.
+- Bilateral non-aggression, alliance, and trade treaties.
+- GDP estimates, treasury, tax policy, employment estimates, resource production and consumption, and bilateral resource trade.
+- Local world-save import/export and Firebase account/cloud synchronization where Firebase providers and Firestore rules are configured.
+
+## Development and build
 ```bash
 npm install
 npm run dev
-```
-
-## Build
-```bash
 npm run build
 ```
 
-## Access and privacy note
-- The launch screen is an intentional entry step, not authentication. Anyone who obtains the Preview URL can open it. Do not distribute the URL publicly if the test should remain small; a true invite-only gate requires server-side authentication or Vercel Deployment Protection.
-
-## Important Beta 0.1 limitations
-- The campaign has abstract phases, not real administrative provinces. A successful campaign changes the controller of the whole country polygon; there is no province-by-province occupation or detailed front-line geometry yet.
-- The capital-to-border route is a simplified straight-line route to a shared-border point, not a road/pathfinding network.
-- AI is deterministic rule-based simulation, not a connected LLM agent or a server-side autonomous worker.
-- State is saved only in the current browser's localStorage. Clearing browser data or changing devices does not sync saves.
-- The simulation runs while the page is open; no persistent background worker or shared multiplayer world is configured.
-- Military values and starting force inventories are game abstractions, not current real-world military intelligence.
-- Country-level borders use Natural Earth / world-atlas generalization and are not suitable for tactical precision.
-
-## Data and map attribution
-- Country names, capitals and population fields: `world-countries` package.
-- Country geometry and adjacency: `world-atlas` / Natural Earth.
-- Map tiles: © OpenStreetMap contributors. Follow the [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+## Data, simulation, and service limitations
+- Military values, population capacities, GDP, and combat outcomes are game abstractions, not authoritative real-world data.
+- Country boundaries use generalized Natural Earth geometry and are not suitable for tactical precision.
+- Autonomous AI is rule-based simulation with evolutionary scoring; it is not a connected LLM agent.
+- Cloud synchronization requires valid Firebase project configuration, enabled authentication providers, and deployed Firestore rules. Local saves remain available without cloud services.
+- The app simulates while the page is open; it does not run a persistent background world when the browser is closed.
+- Map tiles are provided by Esri World Topographic Map. Respect the provider's usage terms and availability.
 
 ## License
 Application source: MIT.
-
-
-## Official release additions
-- Civilian economy panel with GDP estimates, treasury, tax policy, employment estimate, and resource stocks.
-- Versioned `.worldsave` import/export for local backups.
-- Local browser economy persistence.
-- Firebase sign-in, private cloud world snapshots, and queued AI training-event synchronization. Firebase Authentication providers and Firestore rules must be configured in the Firebase console before cloud features are available.
-- Official deployment is built from the `main` branch.

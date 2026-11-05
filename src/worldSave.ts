@@ -3,7 +3,7 @@ import { ensureAIState } from "./simulation";
 import { normalizeEconomy, type EconomyState } from "./economy";
 
 export const WORLD_SAVE_FORMAT = "world-simulator-save";
-export const WORLD_SAVE_VERSION = 2;
+export const WORLD_SAVE_VERSION = 3;
 
 export type WorldSave = {
   format: typeof WORLD_SAVE_FORMAT;
@@ -17,7 +17,7 @@ export type WorldSave = {
 export function createWorldSave(state:SimState,economy?:unknown):WorldSave {
   return {
     format:WORLD_SAVE_FORMAT,version:WORLD_SAVE_VERSION,savedAt:new Date().toISOString(),
-    gameVersion:"Official 2.3.0",state:ensureAIState(state),
+    gameVersion:"Official RTS 3.0.0",state:ensureAIState(state),
     ...(economy===undefined?{}:{economy:economy as EconomyState})
   };
 }
@@ -33,7 +33,7 @@ export function parseWorldSave(raw:string):WorldSave {
   if(save.format!==WORLD_SAVE_FORMAT) throw new Error("This file is not a World Simulator save.");
   if(typeof save.version!=="number"||save.version>WORLD_SAVE_VERSION||save.version<1) throw new Error("Unsupported save version.");
   const state=save.state as SimState|undefined;
-  if(!state||!Array.isArray(state.nations)||!Array.isArray(state.units)||!Array.isArray(state.wars)||!state.control||typeof state.tick!=="number"||!Number.isFinite(state.tick)) {
+  if(!state||!Array.isArray(state.nations)||!Array.isArray(state.units)||!Array.isArray(state.wars)||!state.control||(typeof (state as any).elapsedSeconds!=="number"&&!Number.isFinite(Number((state as any).tick)))) {
     throw new Error("Save data is incomplete or damaged.");
   }
   if(state.nations.length===0||state.nations.length>1000||state.units.length>100000||state.wars.length>10000) throw new Error("Save data exceeds safe limits.");

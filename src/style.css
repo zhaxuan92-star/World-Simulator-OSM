@@ -207,3 +207,17 @@
 .world-save-actions{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}.world-save-actions button{border:1px solid #42627c;background:#10263a;color:#dceaf6;border-radius:7px;padding:10px 13px;font:10px 'DM Mono',monospace;cursor:pointer}.world-save-actions button:hover{background:#1b4261;border-color:#65a7d4}.economy-card{margin-top:12px;padding:15px;border:1px solid #263e54;background:#0c1d2d;border-radius:10px}.economy-card h3{font-size:13px;margin:0 0 12px}.economy-card input[type=range]{width:100%;accent-color:#58a9d9}.economy-card small{display:block;color:#8ea4b8;font-size:10px;line-height:1.6;margin-top:9px}.economy-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid #22384c;font-size:10px}.economy-row b{text-align:right;color:#9fd5b9}
 
 .trade-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}.trade-controls label{display:grid;gap:6px;color:#91a9bf;font-size:10px}.trade-controls select,.trade-controls input{width:100%;min-width:0;background:#071727;border:1px solid #304960;border-radius:6px;color:#e5eff8;padding:9px;font:11px 'DM Mono',monospace}.trade-submit{width:100%;margin-top:10px;border:1px solid #477da2;background:#164568;color:#eaf5ff;border-radius:7px;padding:11px;font:10px 'DM Mono',monospace;cursor:pointer}.trade-submit:disabled{opacity:.4;cursor:not-allowed}@media(max-width:560px){.trade-controls{grid-template-columns:1fr}}
+
+/* Official RTS 3.0 compact command layout */
+.game-ui{max-width:1680px;margin:0 auto;padding:10px}
+.game-layout{grid-template-columns:minmax(0,1fr) 255px;gap:8px}
+.map-area{height:clamp(390px,64vh,760px)}
+.action-dock{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}
+.action-dock button{min-height:42px;font-size:10px;letter-spacing:.6px}
+.world-selector{display:flex;justify-content:flex-end;margin:8px 0}
+.world-selector label{display:flex;align-items:center;gap:10px;color:#9db4c8;font:9px 'DM Mono',monospace}
+.world-selector select{min-width:190px;background:#0b1c2c;border:1px solid #36546d;color:#e8f1f8;border-radius:7px;padding:10px}
+.command-panel{margin-top:8px}
+.quick-stats{margin:8px 0}
+@media(max-width:850px){.game-layout{grid-template-columns:1fr}.map-area{height:58vh;min-height:360px}.nation-card{display:block}.world-selector{justify-content:stretch}.world-selector label{width:100%;justify-content:space-between}.world-selector select{flex:1}}
+@media(max-width:560px){.game-ui{padding:6px}.map-area{height:55vh;min-height:340px}.action-dock{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.action-dock button{min-height:44px;font-size:8px;padding:8px 3px}.world-selector select{min-width:0}.quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}

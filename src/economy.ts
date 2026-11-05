@@ -104,7 +104,7 @@ export function advanceEconomy(state:SimState,economy:EconomyState):EconomyState
     const operatingCost=Math.max(.01,old.gdp*.0008);
     const treasury=clamp(old.treasury+taxRevenue-operatingCost,0,1_000_000_000_000);
     const resourcePressure=resourceKeys.reduce((sum,key)=>sum+(production[key]-consumption[key]),0);
-    const productivity=clamp(old.productivity+(nation.stability-50)*.000002+(resources.technology>old.resources.technology?.0001:-.0001),.25,2);
+    const productivity=clamp(old.productivity+(nation.stability-50)*.000002+(resources.technology>old.resources.technology ? 0.0001 : -0.0001),.25,2);
     const growthFactor=1+metrics.growth/100/365;
     next[nation.id]={
       ...old,population,treasury:round2(treasury),productivity:round2(productivity),

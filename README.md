@@ -5,7 +5,7 @@ World Simulator is a browser-based global strategy sandbox. It simulates soverei
 ## Official production
 - Production branch: `main`
 - Production website: https://world-simulator-osm-vzcapps.vercel.app
-- Release line: Official 2.3.0
+- Release line: Official 3.1.0
 - Mobile-first responsive layout; designed to remain usable on Android browsers.
 
 ## Official 2.3.0 overhaul
@@ -15,6 +15,13 @@ World Simulator is a browser-based global strategy sandbox. It simulates soverei
 - Added import limits and structural validation for world-save files; old version 1 saves remain importable and are upgraded to the current save format.
 - Improved save-file URL cleanup and delayed local persistence slightly to avoid writing the entire world to localStorage on every render tick.
 - Updated official version branding and initialization event text.
+
+## VZC shared platform database (3.1.0)
+- World Simulator and Web-TT use the same Firebase project: `db-fg-9608f`.
+- World Simulator keeps its existing Google/anonymous authentication, cloud world snapshots, economy snapshots, and AI training event sync.
+- Web-TT uses the `news_branches` and `news_articles` Firestore collections. Public reads are enabled; writes and deletes are restricted to the authenticated document owner/author.
+- Firestore rules are maintained in `firestore.rules`. Publish the updated rules to the Firebase project before expecting Web-TT cloud sync to work. The game collections and their existing owner restrictions are retained.
+- Web-TT retains localStorage as an offline fallback and migrates local branches/articles when the shared news collections are empty.
 
 ## Existing simulation systems
 - Natural Earth country geometry and land-border adjacency.

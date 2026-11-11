@@ -1,0 +1,20 @@
+Vzc© — COPYRIGHT INFORMATION
+
+Public brand profile: https://vzc-copyright-center.vercel.app/brand.json
+Copyright hub: https://vzc-copyright-center.vercel.app/copyright
+
+Parent brand: Vzc©
+Publisher name used in project notices: Vzc Corporation
+
+Products:
+- World Simulator OSM — Vzcapps × Vzcgames
+  https://world-simulator-osm.vzcapps.vercel.app
+  Source: https://github.com/zhaxuan92-star/World-Simulator-OSM
+  Copyright and licence notice:
+  https://github.com/zhaxuan92-star/World-Simulator-OSM/blob/main/legal/WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md
+  Application source licence: MIT (see repository LICENSE).
+- Web TT — Vzcapps
+  https://web-tt-vzcapps.vercel.app/
+  Source: https://github.com/zhaxuan92-star/Web-TT
+
+Third-party materials retain their respective owners and licences. This public notice is not a trademark registration certificate, corporate registration record, or government-issued copyright registration certificate.

@@ -8,6 +8,14 @@ World Simulator is a browser-based global strategy sandbox. It simulates soverei
 - Release line: Official 3.1.0
 - Mobile-first responsive layout; designed to remain usable on Android browsers.
 
+## Vzc© brand and copyright information
+- Parent brand information: https://vzc-copyright-center.vercel.app/
+- Machine-readable brand profile: https://vzc-copyright-center.vercel.app/brand.json
+- AI/crawler reading guide: https://vzc-copyright-center.vercel.app/llms.txt
+- Copyright and licence scope: https://vzc-copyright-center.vercel.app/copyright/
+- Publisher notice in this repository: [WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md](legal/WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md)
+- Brand relationship: World Simulator OSM is presented as a joint Vzcapps × Vzcgames game/network product.
+
 ## Official 2.3.0 overhaul
 - Corrected campaign advance pacing so frontline progress is not applied twice in one simulation tick.
 - Reworked economic state validation and migration. Population in the economy now follows the simulation engine's national population as the single source of truth.
@@ -47,5 +55,5 @@ npm run build
 - The app simulates while the page is open; it does not run a persistent background world when the browser is closed.
 - Map tiles are provided by Esri World Topographic Map. Respect the provider's usage terms and availability.
 
-## License
-Application source: MIT.
+## Licence
+Application source: MIT. See the repository [LICENSE](LICENSE) file. The MIT licence governs the source code it covers and is not narrowed by the publisher's separate notice. Third-party assets and services remain subject to their own licences and terms.

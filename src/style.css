@@ -221,3 +221,10 @@
 .quick-stats{margin:8px 0}
 @media(max-width:850px){.game-layout{grid-template-columns:1fr}.map-area{height:58vh;min-height:360px}.nation-card{display:block}.world-selector{justify-content:stretch}.world-selector label{width:100%;justify-content:space-between}.world-selector select{flex:1}}
 @media(max-width:560px){.game-ui{padding:6px}.map-area{height:55vh;min-height:340px}.action-dock{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.action-dock button{min-height:44px;font-size:8px;padding:8px 3px}.world-selector select{min-width:0}.quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Vzc copyright center footer link */
+.copyright-link{color:#36d7e8;text-decoration:none;font:10px 'DM Mono',monospace;letter-spacing:.35px;opacity:.9}
+.copyright-link:hover{color:#fff;text-decoration:underline}
+.new-footer .copyright-link{display:block;margin-top:8px}
+.game-footer .copyright-link{margin-left:auto}
+@media(max-width:650px){.game-footer{flex-wrap:wrap}.game-footer .copyright-link{margin-left:0;width:100%;order:3}}

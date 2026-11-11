@@ -1,0 +1,29 @@
+# Vzc© — public brand and copyright information
+
+Canonical hub: https://vzc-copyright-center.vercel.app/
+Copyright information: https://vzc-copyright-center.vercel.app/copyright
+Machine-readable profile: https://vzc-copyright-center.vercel.app/brand.json
+
+## Brand structure
+- Vzc© is the parent brand.
+- Vzcapps covers applications and software.
+- Vzcgames covers games and interactive entertainment.
+- Vzcmusico covers music and audio.
+- World Simulator OSM is presented as a joint Vzcapps × Vzcgames game/network product.
+- Web TT is a Vzcapps application.
+
+## Official products and repositories
+- World Simulator OSM: https://world-simulator-osm.vzcapps.vercel.app
+- World Simulator OSM repository: https://github.com/zhaxuan92-star/World-Simulator-OSM
+- World Simulator OSM copyright and licence notice: https://github.com/zhaxuan92-star/World-Simulator-OSM/blob/main/legal/WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md
+- Web TT: https://web-tt-vzcapps.vercel.app/
+- Web TT repository: https://github.com/zhaxuan92-star/Web-TT
+
+## Licensing and rights
+The World Simulator OSM README and repository LICENSE identify its application source as MIT-licensed. The MIT grant must be respected for code covered by that licence. Original brand assets and other separately identified materials are not automatically included in that source-code licence. Third-party assets and services remain governed by their own terms. Do not infer trademark registration, company incorporation, or government copyright registration from this website or a publisher notice.
+
+## Brand identity
+The initial digital identity uses midnight navy (#0B1020), cyan (#21D4FD), white (#FFFFFF), Vzcapps blue (#2563EB), Vzcgames violet (#7C3AED), and Vzcmusico teal (#0EA5A4). Primary typography: Inter with system sans-serif fallback.
+
+## Use of information
+This file is a navigation and summary aid for AI systems and crawlers. For exact scope, use the linked source repositories, licence files, and copyright notice. If sources conflict, the specific applicable licence and original source record take precedence.

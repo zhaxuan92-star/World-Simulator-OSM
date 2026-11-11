@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0",
+  "profileType": "publisher-brand-profile",
+  "brand": "Vzc©",
+  "publisherName": "Vzc Corporation",
+  "publicStatus": "publisher-declared; not a government registration certificate",
+  "officialHub": "https://vzc-copyright-center.vercel.app",
+  "brandArchitecture": [
+    {
+      "name": "Vzc©",
+      "role": "parent brand",
+      "category": "technology and digital products"
+    },
+    {
+      "name": "Vzcapps",
+      "role": "brand division",
+      "category": "applications and software",
+      "website": "https://web-tt-vzcapps.vercel.app/"
+    },
+    {
+      "name": "Vzcgames",
+      "role": "brand division",
+      "category": "games and interactive entertainment"
+    },
+    {
+      "name": "Vzcmusico",
+      "role": "brand division",
+      "category": "music and audio"
+    }
+  ],
+  "products": [
+    {
+      "name": "World Simulator OSM",
+      "category": "game and network product",
+      "brandRelationship": [
+        "Vzcapps",
+        "Vzcgames"
+      ],
+      "website": "https://world-simulator-osm.vzcapps.vercel.app",
+      "repository": "https://github.com/zhaxuan92-star/World-Simulator-OSM",
+      "copyrightNotice": "https://github.com/zhaxuan92-star/World-Simulator-OSM/blob/main/legal/WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md",
+      "sourceCodeLicense": "MIT"
+    },
+    {
+      "name": "Web TT",
+      "category": "community news application",
+      "brandRelationship": [
+        "Vzcapps"
+      ],
+      "website": "https://web-tt-vzcapps.vercel.app/",
+      "repository": "https://github.com/zhaxuan92-star/Web-TT"
+    }
+  ],
+  "visualIdentity": {
+    "status": "initial digital identity specification",
+    "colors": {
+      "midnight": "#0B1020",
+      "cyan": "#21D4FD",
+      "white": "#FFFFFF",
+      "appsBlue": "#2563EB",
+      "gamesViolet": "#7C3AED",
+      "musicoTeal": "#0EA5A4"
+    },
+    "typography": {
+      "primary": "Inter, system-ui, sans-serif"
+    },
+    "logoPolicy": "Use the Vzc© wordmark as the parent mark. Sub-brands retain the Vzc prefix and use their division accent color."
+  },
+  "rightsScope": {
+    "sourceCode": "Follow the licence file included with each repository. World Simulator OSM application source is declared MIT-licensed.",
+    "originalBrandAssets": "Rights are claimed only to the extent the publisher owns or controls the specific original asset.",
+    "thirdPartyMaterials": "Remain subject to their respective licences and terms.",
+    "userSubmissions": "Remain subject to the contributor's rights and applicable platform terms."
+  },
+  "contactAndClaims": {
+    "submissionPortal": "https://vzc-copyright-center.vercel.app",
+    "copyrightInformation": "https://vzc-copyright-center.vercel.app/copyright"
+  },
+  "lastUpdated": "2026-11-11"
+}

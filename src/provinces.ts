@@ -72,9 +72,9 @@ export function createProvinces(nations:Nation[]):Province[] {
       }
     }
     if(!candidates.length)candidates.push([nation.lat,nation.lon]);
-    const chosen=candidates.slice(0,count);
+    const chosen=candidates.length>count?Array.from({length:count},(_,i)=>candidates[Math.floor(i*candidates.length/count)]):candidates;
     const landlocked=Boolean(country?.landlocked);
-    const weights=chosen.map(([lat,lon],i)=>{const coastalCandidate=!landlocked;const variation=.85+((hash(nation.id+":"+i)%31)/100);return coastalCandidate?variation:variation});
+    const weights=chosen.map((_,i)=>.85+((hash(nation.id+":"+i)%31)/100));
     const sum=weights.reduce((a,b)=>a+b,0);
     const totalPop=Math.max(1000,nation.population);
     const totalCapacity=Math.max(totalPop,nation.populationCapacity);

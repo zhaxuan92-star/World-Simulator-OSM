@@ -138,6 +138,7 @@ export function advanceWorld(s:SimState,deltaSeconds=1):SimState{
     n.budget=Math.max(1,Math.round(n.population/1_000_000*0.012));
     provinces=rebalanceProvincePopulation(provinces,n.id,n.population);
   }
+  nations=nations.map(n=>{const rows=provinces.filter(p=>p.nationId===n.id);if(!rows.length)return n;const population=rows.reduce((sum,p)=>sum+p.population,0),capacity=rows.reduce((sum,p)=>sum+p.capacity,0);return{...n,population,populationCapacity:Math.max(population,capacity),budget:Math.max(1,Math.round(population/1_000_000*.012))}});
   // Autonomous force generation: recruit a formation when manpower, treasury and infrastructure permit.
   for(const n of nations){const owned=units.filter(u=>u.nationId===n.id);const cap=Math.max(1,Math.min(40,Math.floor(n.population/250000)));const last=owned.reduce((v,u)=>Math.max(v,Number(u.recruitedAt??0)),0);if(owned.length<cap&&clock-last>=30&&(credits[n.id]??0)>=20&&n.population>100000){const fresh=makeUnit(n,owned.length+Math.floor(clock/30));fresh.id=n.id+"-auto-"+Math.floor(clock);fresh.recruitedAt=clock;units.push(fresh);credits[n.id]-=20;events.push(n.name+" raised a new formation through its standing recruitment system.");}}
   // Passive economy and supply recovery: group units once to avoid repeated full-array scans.

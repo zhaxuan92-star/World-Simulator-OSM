@@ -19,6 +19,12 @@ Machine-readable profile: https://vzc-copyright-center.vercel.app/brand.json
 - Web TT: https://web-tt-vzcapps.vercel.app/
 - Web TT repository: https://github.com/zhaxuan92-star/Web-TT
 
+## Vzcmusico music library
+- Music repository: https://github.com/zhaxuan92-star/Kho-r-c-
+- Track manifest: https://raw.githubusercontent.com/zhaxuan92-star/Kho-r-c-/main/tracks.json
+- Music rights notice: https://github.com/zhaxuan92-star/Kho-r-c-/blob/main/VZCMUSICO-COPYRIGHT.md
+- World Simulator OSM streams its in-game background music from this repository. Track inclusion does not transfer ownership or establish permission; each recording and composition retains its own rights.
+
 ## Licensing and rights
 The World Simulator OSM README and repository LICENSE identify its application source as MIT-licensed. The MIT grant must be respected for code covered by that licence. Original brand assets and other separately identified materials are not automatically included in that source-code licence. Third-party assets and services remain governed by their own terms. Do not infer trademark registration, company incorporation, or government copyright registration from this website or a publisher notice.
 

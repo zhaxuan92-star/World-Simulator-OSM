@@ -153,17 +153,37 @@ export async function saveWorldSnapshot(state: SimState, economySnapshot?: unkno
     const user = await getFirebaseUser();
     const world = worldId(user.uid);
     const worldRef = doc(db, "worlds", world);
-    await setDoc(worldRef, {
+    const provinces = Array.isArray(state.provinces) ? state.provinces : [];
+    const { provinces: _provincePayload, ...compactState } = state;
+    const chunkSize = 300;
+    const chunkCount = Math.ceil(provinces.length / chunkSize);
+    const syncKey = "world-simulator-province-sync-v1:" + world;
+    const lastSync = Number(localStorage.getItem(syncKey) || 0);
+    const syncProvinceChunks = chunkCount > 0 && Date.now() - lastSync >= 60000;
+    const payload = {
       worldId: world,
       worldName: "World Simulator",
       ownerId: user.uid,
       status: "active",
-      tick: state.tick,
-      gameState: state,
+      tick: state.elapsedSeconds,
+      gameState: compactState,
+      provinceChunkCount: chunkCount,
       ...(economySnapshot===undefined?{}:{economySnapshot}),
       lastUpdatedAt: serverTimestamp(),
-      schemaVersion: 1
-    }, { merge: true });
+      schemaVersion: 2
+    };
+    if (syncProvinceChunks) {
+      const batch = writeBatch(db);
+      batch.set(worldRef, payload, { merge: true });
+      for (let i=0;i<chunkCount;i++) {
+        const chunkRef = doc(collection(worldRef, "province_chunks"), "chunk-" + i);
+        batch.set(chunkRef, { index:i, provinces:provinces.slice(i*chunkSize,(i+1)*chunkSize), updatedAt:serverTimestamp() }, { merge:true });
+      }
+      await batch.commit();
+      localStorage.setItem(syncKey, String(Date.now()));
+    } else {
+      await setDoc(worldRef, payload, { merge: true });
+    }
     return true;
   } catch (error) {
     console.warn("World cloud save failed", error);
@@ -178,10 +198,19 @@ export async function loadWorldSnapshot(): Promise<SimState | null> {
     const q = query(collection(db, "worlds"), where("ownerId", "==", user.uid));
     const result = await getDocs(q);
     const docs = result.docs
-      .map(item => item.data())
-      .filter(data => data.gameState && typeof data.gameState.tick === "number")
-      .sort((a, b) => (b.lastUpdatedAt?.toMillis?.() ?? 0) - (a.lastUpdatedAt?.toMillis?.() ?? 0));
-    return docs.length ? docs[0].gameState as SimState : null;
+      .filter(item => { const state=item.data().gameState; return state && (typeof state.elapsedSeconds === "number" || typeof state.tick === "number"); })
+      .sort((a, b) => (b.data().lastUpdatedAt?.toMillis?.() ?? 0) - (a.data().lastUpdatedAt?.toMillis?.() ?? 0));
+    if (!docs.length) return null;
+    const latest=docs[0],data=latest.data(),saved=data.gameState as SimState;
+    const chunkCount=Math.max(0,Number(data.provinceChunkCount)||0);
+    if(!chunkCount)return saved;
+    const chunks=await getDocs(collection(doc(db,"worlds",latest.id),"province_chunks"));
+    const provinces=chunks.docs
+      .map(item=>item.data())
+      .filter(item=>Number(item.index)<chunkCount&&Array.isArray(item.provinces))
+      .sort((a,b)=>Number(a.index)-Number(b.index))
+      .flatMap(item=>item.provinces);
+    return {...saved,provinces:provinces.length?provinces:(saved.provinces??[])};
   } catch (error) {
     console.warn("World cloud load failed", error);
     return null;
@@ -195,7 +224,7 @@ export async function loadWorldEconomySnapshot(): Promise<unknown | null> {
     const q = query(collection(db, "worlds"), where("ownerId", "==", user.uid));
     const result = await getDocs(q);
     const docs = result.docs.map(item => item.data())
-      .filter(data => data.gameState && typeof data.gameState.tick === "number")
+      .filter(data => data.gameState && (typeof data.gameState.elapsedSeconds === "number" || typeof data.gameState.tick === "number"))
       .sort((a, b) => (b.lastUpdatedAt?.toMillis?.() ?? 0) - (a.lastUpdatedAt?.toMillis?.() ?? 0));
     return docs.length ? docs[0].economySnapshot ?? null : null;
   } catch (error) {

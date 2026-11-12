@@ -72,7 +72,7 @@ export function queueCompletedCampaigns(state: SimState) {
       attacker: w.attacker,
       defender: w.defender,
       winner,
-      tick: state.tick,
+      tick: state.elapsedSeconds,
       sector: w.sector,
       attackerScore: attacker?.score ?? 0,
       defenderScore: defender?.score ?? 0

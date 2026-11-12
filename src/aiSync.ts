@@ -176,8 +176,8 @@ export async function saveWorldSnapshot(state: SimState, economySnapshot?: unkno
       const batch = writeBatch(db);
       batch.set(worldRef, payload, { merge: true });
       for (let i=0;i<chunkCount;i++) {
-        const chunkRef = doc(collection(worldRef, "province_chunks"), "chunk-" + i);
-        batch.set(chunkRef, { index:i, provinces:provinces.slice(i*chunkSize,(i+1)*chunkSize), updatedAt:serverTimestamp() }, { merge:true });
+        const chunkRef = doc(db, "worlds", world + "-province-" + i);
+        batch.set(chunkRef, { worldId:world, parentWorldId:world, ownerId:user.uid, provinceChunk:true, index:i, provinces:provinces.slice(i*chunkSize,(i+1)*chunkSize), lastUpdatedAt:serverTimestamp(), schemaVersion:2 }, { merge:true });
       }
       await batch.commit();
       localStorage.setItem(syncKey, String(Date.now()));
@@ -204,8 +204,8 @@ export async function loadWorldSnapshot(): Promise<SimState | null> {
     const latest=docs[0],data=latest.data(),saved=data.gameState as SimState;
     const chunkCount=Math.max(0,Number(data.provinceChunkCount)||0);
     if(!chunkCount)return saved;
-    const chunks=await getDocs(collection(doc(db,"worlds",latest.id),"province_chunks"));
-    const provinces=chunks.docs
+    const provinces=result.docs
+      .filter(item=>item.data().parentWorldId===latest.id&&item.data().provinceChunk===true)
       .map(item=>item.data())
       .filter(item=>Number(item.index)<chunkCount&&Array.isArray(item.provinces))
       .sort((a,b)=>Number(a.index)-Number(b.index))

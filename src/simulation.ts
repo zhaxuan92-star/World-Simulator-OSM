@@ -1,6 +1,6 @@
 import worldCountries from "world-countries";
-import topoData from "world-atlas/countries-110m.json";
-import { createProvinces, rebalanceProvincePopulation } from "./provinces";
+import topoData from "world-atlas/countries-10m.json";
+import { createProvinces, ensureProvinceGeometry, rebalanceProvincePopulation } from "./provinces";
 import type { Province } from "./provinces";
 
 export type Nation={id:string;name:string;capital:string;lat:number;lon:number;neighbors:string[];color:string;flag:string;flagCode:string;population:number;populationCapacity:number;budget:number;aggression:number;diplomacy:number;stability:number};
@@ -77,7 +77,7 @@ export function ensureAIState(s:SimState):SimState{
    if(w.status!=="Ceasefire")seen.add(key);
    wars.push({...w,origin:w.origin??w.frontline,progress:Math.max(0,Math.min(99,Number(w.progress)||0)),log:Array.isArray(w.log)?w.log:[]});
  }
- const {tick:_oldTick,aiLastTrainingTick:_oldTraining,...clean}=legacy;return{...clean,elapsedSeconds:Number.isFinite(s.elapsedSeconds)?s.elapsedSeconds:Math.max(0,Number(_oldTick)||0),nations,provinces:Array.isArray(s.provinces)&&s.provinces.length?s.provinces:createProvinces(nations),sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingAt:Number.isFinite(s.aiLastTrainingAt)?s.aiLastTrainingAt:Math.max(0,Number(_oldTraining)||0)};
+ const {tick:_oldTick,aiLastTrainingTick:_oldTraining,...clean}=legacy;return{...clean,elapsedSeconds:Number.isFinite(s.elapsedSeconds)?s.elapsedSeconds:Math.max(0,Number(_oldTick)||0),nations,provinces:ensureProvinceGeometry(s.provinces,nations),sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingAt:Number.isFinite(s.aiLastTrainingAt)?s.aiLastTrainingAt:Math.max(0,Number(_oldTraining)||0)};
 }
 export function createInitialState():SimState{const nations=nationDatabase;const control:Record<string,string>={},credits:Record<string,number>={},relations:Record<string,number>={};nations.forEach(n=>{control[n.id]=n.id;credits[n.id]=100});return{elapsedSeconds:0,nations,provinces:createProvinces(nations),units:nations.map((n,i)=>makeUnit(n,i)),wars:[],upgrades:{},credits,control,sectorControl:{},relations,treaties:[],...initialAI(nations),aiLastTrainingAt:0,events:["OFFICIAL WORLD INITIALIZED: country and capital database loaded.","Provincial grid generated from country geometry; cell count scales with national land area.","Population is simulated per province using terrain suitability and local development."]}}
 export function nationName(s:SimState,id:string){return s.nations.find(n=>n.id===id)?.name??id}

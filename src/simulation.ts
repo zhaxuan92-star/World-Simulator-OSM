@@ -1,12 +1,14 @@
 import worldCountries from "world-countries";
 import topoData from "world-atlas/countries-110m.json";
+import { createProvinces, rebalanceProvincePopulation } from "./provinces";
+import type { Province } from "./provinces";
 
 export type Nation={id:string;name:string;capital:string;lat:number;lon:number;neighbors:string[];color:string;flag:string;flagCode:string;population:number;populationCapacity:number;budget:number;aggression:number;diplomacy:number;stability:number};
 export type ArmyUnit={recruitedAt?:number;id:string;nationId:string;name:string;branch:"Army"|"Air Force"|"Navy"|"Logistics";type:string;personnel:number;strength:number;level:number;readiness:number;supply:number;x:number;y:number;status:"At capital"|"Moving to frontier"|"Advancing"|"In battle"|"Patrolling";progress:number;targetId?:string;warId?:string;targetX?:number;targetY?:number;nextMoveAt?:number};
 export type War={id:string;attacker:string;defender:string;doctrine?:"conventional"|"guerrilla"|"blitzkrieg"|"attrition"|"deep-defense"|"amphibious";origin?:[number,number];status:"Mobilizing"|"Active"|"Ceasefire";stage:"Mobilizing"|"Border approach"|"Advance"|"Battle"|"Occupation";progress:number;started:number;frontline:[number,number];sector:number;log:string[]};
 export type Treaty={id:string;a:string;b:string;type:"Non-aggression"|"Alliance"|"Trade";created:number;active:boolean};
 export type AIStrategy={id:string;name:string;generation:number;aggression:number;defense:number;logistics:number;diplomacy:number;risk:number;score:number;wins:number;losses:number;games:number};
-export type SimState={elapsedSeconds:number;nations:Nation[];units:ArmyUnit[];wars:War[];upgrades:Record<string,number>;credits:Record<string,number>;control:Record<string,string>;sectorControl:Record<string,string>;relations:Record<string,number>;treaties:Treaty[];events:string[];aiProfiles:Record<string,AIStrategy>;aiChampion:AIStrategy;aiCandidates:AIStrategy[];aiLastTrainingAt:number};
+export type SimState={elapsedSeconds:number;nations:Nation[];provinces?:Province[];units:ArmyUnit[];wars:War[];upgrades:Record<string,number>;credits:Record<string,number>;control:Record<string,string>;sectorControl:Record<string,string>;relations:Record<string,number>;treaties:Treaty[];events:string[];aiProfiles:Record<string,AIStrategy>;aiChampion:AIStrategy;aiCandidates:AIStrategy[];aiLastTrainingAt:number};
 const palette=["#3977d5","#d94c4c","#a56bd6","#d99b3d","#4ca58b","#4eaa65","#df79a2","#c6a84a","#55a6a0","#b36c54"];
 const seed=(s:string,n:number)=>{let h=n+2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return(h>>>0)/4294967295};
 const topo:any=topoData;const records:any[]=worldCountries as any[];
@@ -75,9 +77,9 @@ export function ensureAIState(s:SimState):SimState{
    if(w.status!=="Ceasefire")seen.add(key);
    wars.push({...w,origin:w.origin??w.frontline,progress:Math.max(0,Math.min(99,Number(w.progress)||0)),log:Array.isArray(w.log)?w.log:[]});
  }
- const {tick:_oldTick,aiLastTrainingTick:_oldTraining,...clean}=legacy;return{...clean,elapsedSeconds:Number.isFinite(s.elapsedSeconds)?s.elapsedSeconds:Math.max(0,Number(_oldTick)||0),nations,sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingAt:Number.isFinite(s.aiLastTrainingAt)?s.aiLastTrainingAt:Math.max(0,Number(_oldTraining)||0)};
+ const {tick:_oldTick,aiLastTrainingTick:_oldTraining,...clean}=legacy;return{...clean,elapsedSeconds:Number.isFinite(s.elapsedSeconds)?s.elapsedSeconds:Math.max(0,Number(_oldTick)||0),nations,provinces:Array.isArray(s.provinces)&&s.provinces.length?s.provinces:createProvinces(nations),sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingAt:Number.isFinite(s.aiLastTrainingAt)?s.aiLastTrainingAt:Math.max(0,Number(_oldTraining)||0)};
 }
-export function createInitialState():SimState{const nations=nationDatabase;const control:Record<string,string>={},credits:Record<string,number>={},relations:Record<string,number>={};nations.forEach(n=>{control[n.id]=n.id;credits[n.id]=100});return{elapsedSeconds:0,nations,units:nations.map((n,i)=>makeUnit(n,i)),wars:[],upgrades:{},credits,control,sectorControl:{},relations,treaties:[],...initialAI(nations),aiLastTrainingAt:0,events:["OFFICIAL WORLD INITIALIZED: country and capital database loaded.","Land-border adjacency generated from Natural Earth topology.","Each country starts with a national headquarters and one formation."]}}
+export function createInitialState():SimState{const nations=nationDatabase;const control:Record<string,string>={},credits:Record<string,number>={},relations:Record<string,number>={};nations.forEach(n=>{control[n.id]=n.id;credits[n.id]=100});return{elapsedSeconds:0,nations,provinces:createProvinces(nations),units:nations.map((n,i)=>makeUnit(n,i)),wars:[],upgrades:{},credits,control,sectorControl:{},relations,treaties:[],...initialAI(nations),aiLastTrainingAt:0,events:["OFFICIAL WORLD INITIALIZED: country and capital database loaded.","Provincial grid generated from country geometry; cell count scales with national land area.","Population is simulated per province using terrain suitability and local development."]}}
 export function nationName(s:SimState,id:string){return s.nations.find(n=>n.id===id)?.name??id}
 export function relationKey(a:string,b:string){return[a,b].sort().join(":")}
 export function addUnit(s:SimState,nationId:string,typeIndex:number):SimState{const n=s.nations.find(x=>x.id===nationId),t=unitTypes[typeIndex];if(!n||!t)return s;const cost=t.cost-(s.upgrades[nationId+":industry"]??0)*2;if((s.credits[nationId]??0)<cost)return{...s,events:["Recruitment failed: insufficient national credits.",...s.events].slice(0,30)};const count=s.units.filter(u=>u.nationId===nationId).length;const unit:ArmyUnit={id:nationId+"-"+(count+1)+"-"+Math.floor(s.elapsedSeconds),nationId,name:t.name,branch:t.branch,type:t.name,personnel:t.personnel,strength:t.strength,level:1,readiness:75,supply:100,x:n.lat,y:n.lon,status:"At capital",progress:0};return{...s,credits:{...s.credits,[nationId]:s.credits[nationId]-cost},units:[...s.units,unit],events:[n.name+" recruited "+t.name+" at "+n.capital+".",...s.events].slice(0,30)}}
@@ -99,7 +101,24 @@ export function declareWar(s:SimState,attackerId:string,defenderId:string,godMod
  return{...s,units,wars:[...s.wars,war],events:[a.name+" declared war on "+d.name+(godMode?" (GOD MODE).":"."),...s.events].slice(0,40)};
 }
 export function signTreaty(s:SimState,a:string,b:string,type:Treaty["type"]):SimState{if(a===b||s.control[a]!==a||s.control[b]!==b)return s;const key=relationKey(a,b);if(s.treaties.some(t=>t.active&&relationKey(t.a,t.b)===key&&t.type===type))return s;const treaty:Treaty={id:key+":"+type+":"+Math.floor(s.elapsedSeconds),a,b,type,created:s.elapsedSeconds,active:true};const delta=type==="Alliance"?25:type==="Non-aggression"?18:12;return{...s,treaties:[...s.treaties,treaty],relations:{...s.relations,[key]:Math.min(100,(s.relations[key]??0)+delta)},events:[type+" treaty signed: "+nationName(s,a)+" and "+nationName(s,b)+".",...s.events].slice(0,30)}}
-export function advanceWorld(s:SimState,deltaSeconds=1):SimState{const dt=Math.max(0,Math.min(5,Number.isFinite(deltaSeconds)?deltaSeconds:1)),elapsedSeconds=s.elapsedSeconds+dt,clock=elapsedSeconds,units=s.units.map(u=>({...u})),wars=s.wars.map(w=>({...w,log:[...w.log]})),control={...s.control},sectorControl={...(s.sectorControl??{})},credits={...s.credits},events:string[]=[],nations=s.nations.map(n=>{const capacity=Math.max(1_500_000,n.populationCapacity||n.population*1.5),terrainFactor=Math.max(.35,Math.min(1.5,capacity/Math.max(1_000_000,n.population))),growth=n.population<capacity?Math.max(0,Math.round(n.population*.00003*terrainFactor*dt)):0,population=Math.min(capacity,n.population+growth);return{...n,population,budget:Math.max(1,Math.round(population/1_000_000*.012))}});
+export function advanceWorld(s:SimState,deltaSeconds=1):SimState{
+ const dt=Math.max(0,Math.min(5,Number.isFinite(deltaSeconds)?deltaSeconds:1)),elapsedSeconds=s.elapsedSeconds+dt,clock=elapsedSeconds,units=s.units.map(u=>({...u})),wars=s.wars.map(w=>({...w,log:[...w.log]})),control={...s.control},sectorControl={...(s.sectorControl??{})},credits={...s.credits},events:string[]=[];
+ let provinces=(s.provinces?.length?s.provinces:createProvinces(s.nations)).map(p=>{
+  const nation=s.nations.find(n=>n.id===p.nationId);
+  if(!nation)return p;
+  const terrainRate=p.terrain==="mountain"?.22:p.terrain==="plateau"?.48:p.terrain==="hill"?.72:p.terrain==="desert"?.18:p.terrain==="coastal"?1.2:1.05;
+  const developmentFactor=.72+p.development/180;
+  const pressure=Math.max(.35,Math.min(1.25,nation.stability/70));
+  const rate=.00008*terrainRate*developmentFactor*pressure;
+  const growth=p.population<p.capacity?Math.max(0,Math.round(p.population*rate*dt)):0;
+  return {...p,population:Math.min(p.capacity,p.population+growth)};
+ });
+ let nations=s.nations.map(n=>{
+  const rows=provinces.filter(p=>p.nationId===n.id);
+  const population=rows.length?rows.reduce((sum,p)=>sum+p.population,0):n.population;
+  const capacity=rows.length?rows.reduce((sum,p)=>sum+p.capacity,0):n.populationCapacity;
+  return {...n,population:Math.max(1000,population),populationCapacity:Math.max(population,capacity),budget:Math.max(1,Math.round(population/1_000_000*.012))};
+ });
   // Peaceful migration: small population flows toward stable neighboring countries with spare capacity.
   const atWar=new Set(wars.filter(w=>w.status!=="Ceasefire").flatMap(w=>[w.attacker,w.defender]));
   const migration:Record<string,number>={};
@@ -117,6 +136,7 @@ export function advanceWorld(s:SimState,deltaSeconds=1):SimState{const dt=Math.m
   for(const n of nations){
     n.population=Math.max(1000,Math.min(n.populationCapacity,n.population+(migration[n.id]??0)));
     n.budget=Math.max(1,Math.round(n.population/1_000_000*0.012));
+    provinces=rebalanceProvincePopulation(provinces,n.id,n.population);
   }
   // Autonomous force generation: recruit a formation when manpower, treasury and infrastructure permit.
   for(const n of nations){const owned=units.filter(u=>u.nationId===n.id);const cap=Math.max(1,Math.min(40,Math.floor(n.population/250000)));const last=owned.reduce((v,u)=>Math.max(v,Number(u.recruitedAt??0)),0);if(owned.length<cap&&clock-last>=30&&(credits[n.id]??0)>=20&&n.population>100000){const fresh=makeUnit(n,owned.length+Math.floor(clock/30));fresh.id=n.id+"-auto-"+Math.floor(clock);fresh.recruitedAt=clock;units.push(fresh);credits[n.id]-=20;events.push(n.name+" raised a new formation through its standing recruitment system.");}}
@@ -206,5 +226,5 @@ export function advanceWorld(s:SimState,deltaSeconds=1):SimState{const dt=Math.m
   if(Math.floor(clock/20)>Math.floor(s.elapsedSeconds/20))events.push("AI world review: national budgets, supply, diplomatic treaties and border security updated.");
   const uniqueWars:War[]=[];const activePairs=new Set<string>();for(const w of wars){const key=[w.attacker,w.defender].sort().join(":");if(w.status!=="Ceasefire"&&activePairs.has(key))continue;if(w.status!=="Ceasefire")activePairs.add(key);uniqueWars.push(w)}
   const trained=trainAI({...s,elapsedSeconds,nations,units,wars:uniqueWars,control,credits});
-  return{...s,...trained,elapsedSeconds,nations,units,wars:uniqueWars,control,sectorControl:{},credits,events:[...events,...trained.events].slice(0,40)}
+  return{...s,...trained,elapsedSeconds,nations,provinces,units,wars:uniqueWars,control,sectorControl:{},credits,events:[...events,...trained.events].slice(0,40)}
 }

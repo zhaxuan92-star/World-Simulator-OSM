@@ -46,3 +46,10 @@ For formal enforcement, preserve dated source archives, commit history, original
 
 **Vzc Corporation**  
 Publisher's copyright and licence notice · World Simulator OSM · Updated 11 November 2026
+
+
+## 6. Music library and third-party recordings
+
+World Simulator OSM obtains background music from the separate Vzcmusico repository: https://github.com/zhaxuan92-star/Kho-r-c-/. The music catalogue is available at https://raw.githubusercontent.com/zhaxuan92-star/Kho-r-c-/main/tracks.json. The Vzcmusico library notice is published at https://github.com/zhaxuan92-star/Kho-r-c-/blob/main/VZCMUSICO-COPYRIGHT.md.
+
+The publisher claims no ownership of third-party recordings, compositions, remixes, performances, samples, or artwork merely because they are stored in or streamed from that repository. The manifest field `approved: true` means included in the playback catalogue only; it is not proof of copyright clearance or a music-use licence. Each track remains subject to its own rights and permissions. See the Vzcmusico notice for the rights enquiry process.

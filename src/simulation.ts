@@ -1,5 +1,5 @@
 import worldCountries from "world-countries";
-import topoData from "world-atlas/countries-10m.json";
+import topoData from "world-atlas/countries-110m.json";
 import { createProvinces, ensureProvinceGeometry, rebalanceProvincePopulation } from "./provinces";
 import type { Province } from "./provinces";
 

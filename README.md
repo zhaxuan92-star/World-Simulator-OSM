@@ -16,6 +16,12 @@ World Simulator is a browser-based global strategy sandbox. It simulates soverei
 - Publisher notice in this repository: [WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md](legal/WORLD-SIMULATOR-COPYRIGHT-Vzc-Corporation.md)
 - Brand relationship: World Simulator OSM is presented as a joint Vzcapps × Vzcgames game/network product.
 
+## Vzcmusico music library
+- In-game background music is sourced from [Kho-r-c-](https://github.com/zhaxuan92-star/Kho-r-c-).
+- The game loads [tracks.json](https://raw.githubusercontent.com/zhaxuan92-star/Kho-r-c-/main/tracks.json), with MP3 discovery as a fallback, and the player provides source and rights-notice links.
+- Music rights notice: [VZCMUSICO-COPYRIGHT.md](https://github.com/zhaxuan92-star/Kho-r-c-/blob/main/VZCMUSICO-COPYRIGHT.md).
+- A manifest entry marked `approved: true` means it is included in the playback catalogue only; it does not establish copyright clearance. Individual tracks remain subject to their rights holders' terms.
+
 ## Official 2.3.0 overhaul
 - Corrected campaign advance pacing so frontline progress is not applied twice in one simulation tick.
 - Reworked economic state validation and migration. Population in the economy now follows the simulation engine's national population as the single source of truth.

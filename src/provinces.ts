@@ -112,10 +112,24 @@ export function applyProvinceElevation(provinces:Province[],nationId:string,valu
 export function rebalanceProvincePopulation(provinces:Province[],nationId:string,total:number):Province[]{
   const rows=provinces.filter(p=>p.nationId===nationId);
   if(!rows.length)return provinces;
-  const weights=rows.map(p=>Math.max(.05,p.suitability)*(1+p.development/200));
-  const sum=weights.reduce((a,b)=>a+b,0);
-  const assigned=new Map(rows.map((p,i)=>[p.id,Math.round(total*weights[i]/sum)]));
-  let difference=total-[...assigned.values()].reduce((a,b)=>a+b,0);
-  if(difference)assigned.set(rows[0].id,(assigned.get(rows[0].id)??0)+difference);
+  const current=rows.reduce((sum,p)=>sum+p.population,0);
+  let delta=Math.round(total-current);
+  const assigned=new Map(rows.map(p=>[p.id,p.population]));
+  if(delta>0){
+    const room=rows.reduce((sum,p)=>sum+Math.max(0,p.capacity-p.population),0);
+    let remaining=Math.min(delta,room);
+    const weights=rows.map(p=>Math.max(0,p.capacity-p.population)*Math.max(.05,p.suitability)*(1+p.development/200));
+    const weightTotal=weights.reduce((a,b)=>a+b,0)||1;
+    rows.forEach((p,i)=>{const amount=Math.min(Math.max(0,p.capacity-p.population),Math.round(remaining*weights[i]/weightTotal));assigned.set(p.id,(assigned.get(p.id)??0)+amount)});
+    let used=[...assigned.entries()].reduce((sum,[id,value])=>sum+value,0)-current;
+    for(const p of rows){if(used>=remaining)break;const roomLeft=Math.max(0,p.capacity-(assigned.get(p.id)??0));if(roomLeft){const amount=Math.min(roomLeft,remaining-used);assigned.set(p.id,(assigned.get(p.id)??0)+amount);used+=amount}}
+  }else if(delta<0){
+    let remaining=Math.min(-delta,current);
+    const weights=rows.map(p=>p.population);
+    const weightTotal=weights.reduce((a,b)=>a+b,0)||1;
+    rows.forEach((p,i)=>{const amount=Math.min(p.population,Math.round(remaining*weights[i]/weightTotal));assigned.set(p.id,Math.max(0,p.population-amount))});
+    let removed=current-[...assigned.values()].reduce((a,b)=>a+b,0);
+    for(const p of rows){if(removed>=remaining)break;const available=assigned.get(p.id)??0;if(available){const amount=Math.min(available,remaining-removed);assigned.set(p.id,available-amount);removed+=amount}}
+  }
   return provinces.map(p=>assigned.has(p.id)?{...p,population:Math.max(0,assigned.get(p.id)??0)}:p);
 }

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://world-simulator-osm.vzcapps.vercel.app/sitemap.xml
+Sitemap: https://world-simulator-osm-vzcapps.vercel.app/sitemap.xml

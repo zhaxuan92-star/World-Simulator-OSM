@@ -17,6 +17,7 @@ World Simulator is a browser-based global strategy sandbox. It simulates soverei
 - Brand relationship: World Simulator OSM is presented as a joint Vzcapps × Vzcgames game/network product.
 
 ## Vzcmusico music library
+- Central music listening hub: https://vzcmusico.vercel.app/ (official Spotify/YouTube embeds and in-browser MP3 player).
 - In-game background music is sourced from [Kho-r-c-](https://github.com/zhaxuan92-star/Kho-r-c-).
 - The game loads [tracks.json](https://raw.githubusercontent.com/zhaxuan92-star/Kho-r-c-/main/tracks.json), with MP3 discovery as a fallback, and the player provides source and rights-notice links.
 - Music rights notice: [VZCMUSICO-COPYRIGHT.md](https://github.com/zhaxuan92-star/Kho-r-c-/blob/main/VZCMUSICO-COPYRIGHT.md).

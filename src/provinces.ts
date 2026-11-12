@@ -74,20 +74,20 @@ export function createProvinces(nations:Nation[]):Province[] {
     if(!candidates.length)candidates.push([nation.lat,nation.lon]);
     const chosen=candidates.slice(0,count);
     const landlocked=Boolean(country?.landlocked);
-    const weights=chosen.map(([lat,lon],i)=>{const coastal=!landlocked&&(i%4===0||Math.abs(lat)>55);const variation=.85+((hash(nation.id+":"+i)%31)/100);return coastal?variation*1.2:variation});
+    const weights=chosen.map(([lat,lon],i)=>{const coastalCandidate=!landlocked;const variation=.85+((hash(nation.id+":"+i)%31)/100);return coastalCandidate?variation:variation});
     const sum=weights.reduce((a,b)=>a+b,0);
     const totalPop=Math.max(1000,nation.population);
     const totalCapacity=Math.max(totalPop,nation.populationCapacity);
     chosen.forEach(([lat,lon],i)=>{
-      const coastal=!landlocked&&(i%4===0||Math.abs(lat)>55);
-      const suitability=coastal?1.2:1;
+      const coastalCandidate=!landlocked;
+      const suitability=1;
       const provinceArea=area/chosen.length;
       const capacity=Math.max(500,Math.round(totalCapacity*weights[i]/sum));
       const population=Math.max(100,Math.round(totalPop*weights[i]/sum));
       output.push({
         id:nation.id+"-P"+String(i+1).padStart(3,"0"),nationId:nation.id,
         name:nation.name+" · Tỉnh "+(i+1),lat,lon,areaKm2:provinceArea,
-        population,capacity,elevationMeters:null,terrain:"pending",coastal,suitability,
+        population,capacity,elevationMeters:null,terrain:"pending",coastal:coastalCandidate,suitability,
         development:Math.max(1,Math.min(100,Math.round(22+suitability*18+(hash(nation.id+":"+i)%35))))
       });
     });
@@ -100,13 +100,13 @@ export function applyProvinceElevation(provinces:Province[],nationId:string,valu
     if(p.nationId!==nationId||p.elevationMeters!==null)return p;
     const elevation=Number(values[index++]);
     if(!Number.isFinite(elevation))return p;
-    let terrain:TerrainKind="plain",suitability=1;
+    let terrain:TerrainKind="plain",suitability=1,coastal=false;
     if(elevation>=2200){terrain="mountain";suitability=.2}
     else if(elevation>=1000){terrain="plateau";suitability=.48}
     else if(elevation>=450){terrain="hill";suitability=.72}
-    else if(p.coastal){terrain="coastal";suitability=1.2}
+    else if(p.coastal&&elevation<35){terrain="coastal";suitability=1.2;coastal=true}
     else if(elevation<80){terrain="plain";suitability=1.12}
-    return {...p,elevationMeters:elevation,terrain,suitability,capacity:Math.max(100,Math.round(p.capacity*suitability))};
+    return {...p,coastal,elevationMeters:elevation,terrain,suitability,capacity:Math.max(100,Math.round(p.capacity*suitability))};
   });
 }
 export function rebalanceProvincePopulation(provinces:Province[],nationId:string,total:number):Province[]{

@@ -1,5 +1,5 @@
 import worldCountries from "world-countries";
-import topologyData from "world-atlas/countries-10m.json";
+import topologyData from "world-atlas/countries-110m.json";
 import { feature } from "topojson-client";
 import polygonClipping from "polygon-clipping";
 import type { Nation } from "./simulation";

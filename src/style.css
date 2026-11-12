@@ -247,3 +247,7 @@
 .province-focus b{font-size:12px;color:#f2f6fb}.province-focus span{font-size:11px;line-height:1.5;color:#9eb0c4}
 .province-row{cursor:pointer;border-left:3px solid #5b9bd5}.province-row:hover{background:#182c40}
 .province-row b{display:block}.province-row span,.province-row small{display:block;margin-top:5px}
+
+
+/* Adaptive map quality selector */
+.map-quality-control{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}.map-quality-control label{font-size:9px;letter-spacing:.12em;color:#8296aa;font-weight:800}.map-quality-control select{max-width:180px;background:#101e2d;color:#e5edf5;border:1px solid #33475d;border-radius:8px;padding:8px 10px;font:inherit;font-size:12px}.map-quality-control span{font-size:11px;color:#91a4b8}@media(max-width:520px){.map-head{align-items:flex-start;gap:8px}.map-quality-control{max-width:58%;gap:4px}.map-quality-control select{max-width:100%;font-size:11px;padding:7px}}

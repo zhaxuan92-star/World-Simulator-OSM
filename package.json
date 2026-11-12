@@ -16,7 +16,8 @@
     "world-atlas": "^2.0.2",
     "world-countries": "^5.0.0",
     "react-leaflet": "^4.2.1",
-    "firebase": "^11.10.0"
+    "firebase": "^11.10.0",
+    "polygon-clipping": "^0.15.7"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.16",

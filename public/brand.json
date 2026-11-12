@@ -61,6 +61,22 @@
       "copyrightNotice": "https://github.com/zhaxuan92-star/Kho-r-c-/blob/main/VZCMUSICO-COPYRIGHT.md",
       "connectedProduct": "https://world-simulator-osm.vzcapps.vercel.app",
       "rightsNote": "Individual recordings and compositions remain with their respective rights holders; repository inclusion is not proof of clearance."
+    },
+    {
+      "name": "Vzcmusico Music Hub",
+      "category": "music streaming and library web application",
+      "brandRelationship": [
+        "Vzcmusico"
+      ],
+      "website": "https://vzcmusico.vercel.app/",
+      "repository": "https://github.com/zhaxuan92-star/Kho-r-c-",
+      "manifest": "https://raw.githubusercontent.com/zhaxuan92-star/Kho-r-c-/main/tracks.json",
+      "copyrightNotice": "https://github.com/zhaxuan92-star/Kho-r-c-/blob/main/VZCMUSICO-COPYRIGHT.md",
+      "integrations": [
+        "Official Spotify embeds",
+        "Official YouTube embeds"
+      ],
+      "rightsNote": "Does not bypass DRM or download third-party platform music; downloads from the library require explicit verified per-track permission."
     }
   ],
   "visualIdentity": {

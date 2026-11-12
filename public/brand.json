@@ -49,6 +49,18 @@
       ],
       "website": "https://web-tt-vzcapps.vercel.app/",
       "repository": "https://github.com/zhaxuan92-star/Web-TT"
+    },
+    {
+      "name": "Vzcmusico Music Library",
+      "category": "curated MP3 music library",
+      "brandRelationship": [
+        "Vzcmusico"
+      ],
+      "repository": "https://github.com/zhaxuan92-star/Kho-r-c-",
+      "manifest": "https://raw.githubusercontent.com/zhaxuan92-star/Kho-r-c-/main/tracks.json",
+      "copyrightNotice": "https://github.com/zhaxuan92-star/Kho-r-c-/blob/main/VZCMUSICO-COPYRIGHT.md",
+      "connectedProduct": "https://world-simulator-osm.vzcapps.vercel.app",
+      "rightsNote": "Individual recordings and compositions remain with their respective rights holders; repository inclusion is not proof of clearance."
     }
   ],
   "visualIdentity": {
@@ -76,5 +88,5 @@
     "submissionPortal": "https://vzc-copyright-center.vercel.app",
     "copyrightInformation": "https://vzc-copyright-center.vercel.app/copyright"
   },
-  "lastUpdated": "2026-11-11"
+  "lastUpdated": "2026-11-12"
 }

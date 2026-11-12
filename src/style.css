@@ -242,3 +242,8 @@
 .event-list article{border-left:3px solid #477fa5}
 .event-list article:first-child{border-left-color:#68c69a;background:#112c3c}
 .event-list article span{line-height:1.65;overflow-wrap:anywhere}
+
+.province-focus{display:grid;gap:5px;margin-top:13px;padding:12px;border:1px solid #ffffff18;border-radius:10px;background:#101d2b}
+.province-focus b{font-size:12px;color:#f2f6fb}.province-focus span{font-size:11px;line-height:1.5;color:#9eb0c4}
+.province-row{cursor:pointer;border-left:3px solid #5b9bd5}.province-row:hover{background:#182c40}
+.province-row b{display:block}.province-row span,.province-row small{display:block;margin-top:5px}

@@ -20,6 +20,7 @@ Machine-readable profile: https://vzc-copyright-center.vercel.app/brand.json
 - Web TT repository: https://github.com/zhaxuan92-star/Web-TT
 
 ## Vzcmusico music library
+- Vzcmusico Music Hub: https://vzcmusico.vercel.app/ — in-browser MP3 playback and official Spotify/YouTube embeds.
 - Music repository: https://github.com/zhaxuan92-star/Kho-r-c-
 - Track manifest: https://raw.githubusercontent.com/zhaxuan92-star/Kho-r-c-/main/tracks.json
 - Music rights notice: https://github.com/zhaxuan92-star/Kho-r-c-/blob/main/VZCMUSICO-COPYRIGHT.md

@@ -1,6 +1,6 @@
 import worldCountries from "world-countries";
 import topoData from "world-atlas/countries-110m.json";
-import { createProvinces, ensureProvinceGeometry, rebalanceProvincePopulation } from "./provinces";
+import { createProvinces } from "./provinces";
 import type { Province } from "./provinces";
 
 export type Nation={id:string;name:string;capital:string;lat:number;lon:number;neighbors:string[];color:string;flag:string;flagCode:string;population:number;populationCapacity:number;budget:number;aggression:number;diplomacy:number;stability:number};
@@ -77,9 +77,9 @@ export function ensureAIState(s:SimState):SimState{
    if(w.status!=="Ceasefire")seen.add(key);
    wars.push({...w,origin:w.origin??w.frontline,progress:Math.max(0,Math.min(99,Number(w.progress)||0)),log:Array.isArray(w.log)?w.log:[]});
  }
- const {tick:_oldTick,aiLastTrainingTick:_oldTraining,...clean}=legacy;return{...clean,elapsedSeconds:Number.isFinite(s.elapsedSeconds)?s.elapsedSeconds:Math.max(0,Number(_oldTick)||0),nations,provinces:ensureProvinceGeometry(s.provinces,nations),sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingAt:Number.isFinite(s.aiLastTrainingAt)?s.aiLastTrainingAt:Math.max(0,Number(_oldTraining)||0)};
+ const {tick:_oldTick,aiLastTrainingTick:_oldTraining,...clean}=legacy;return{...clean,elapsedSeconds:Number.isFinite(s.elapsedSeconds)?s.elapsedSeconds:Math.max(0,Number(_oldTick)||0),nations,provinces:Array.isArray(s.provinces)?s.provinces:[],sectorControl:s.sectorControl??{},wars,aiProfiles:s.aiProfiles??base.aiProfiles,aiCandidates:s.aiCandidates??base.aiCandidates,aiChampion:s.aiChampion??{...base.aiChampion},aiLastTrainingAt:Number.isFinite(s.aiLastTrainingAt)?s.aiLastTrainingAt:Math.max(0,Number(_oldTraining)||0)};
 }
-export function createInitialState():SimState{const nations=nationDatabase;const control:Record<string,string>={},credits:Record<string,number>={},relations:Record<string,number>={};nations.forEach(n=>{control[n.id]=n.id;credits[n.id]=100});return{elapsedSeconds:0,nations,provinces:createProvinces(nations),units:nations.map((n,i)=>makeUnit(n,i)),wars:[],upgrades:{},credits,control,sectorControl:{},relations,treaties:[],...initialAI(nations),aiLastTrainingAt:0,events:["OFFICIAL WORLD INITIALIZED: country and capital database loaded.","Provincial grid generated from country geometry; cell count scales with national land area.","Population is simulated per province using terrain suitability and local development."]}}
+export function createInitialState():SimState{const nations=nationDatabase;const control:Record<string,string>={},credits:Record<string,number>={},relations:Record<string,number>={};nations.forEach(n=>{control[n.id]=n.id;credits[n.id]=100});return{elapsedSeconds:0,nations,provinces:[],units:nations.map((n,i)=>makeUnit(n,i)),wars:[],upgrades:{},credits,control,sectorControl:{},relations,treaties:[],...initialAI(nations),aiLastTrainingAt:0,events:["OFFICIAL WORLD INITIALIZED: country and capital database loaded.","Provincial grid generated from country geometry; cell count scales with national land area.","Population is simulated per province using terrain suitability and local development."]}}
 export function nationName(s:SimState,id:string){return s.nations.find(n=>n.id===id)?.name??id}
 export function relationKey(a:string,b:string){return[a,b].sort().join(":")}
 export function addUnit(s:SimState,nationId:string,typeIndex:number):SimState{const n=s.nations.find(x=>x.id===nationId),t=unitTypes[typeIndex];if(!n||!t)return s;const cost=t.cost-(s.upgrades[nationId+":industry"]??0)*2;if((s.credits[nationId]??0)<cost)return{...s,events:["Recruitment failed: insufficient national credits.",...s.events].slice(0,30)};const count=s.units.filter(u=>u.nationId===nationId).length;const unit:ArmyUnit={id:nationId+"-"+(count+1)+"-"+Math.floor(s.elapsedSeconds),nationId,name:t.name,branch:t.branch,type:t.name,personnel:t.personnel,strength:t.strength,level:1,readiness:75,supply:100,x:n.lat,y:n.lon,status:"At capital",progress:0};return{...s,credits:{...s.credits,[nationId]:s.credits[nationId]-cost},units:[...s.units,unit],events:[n.name+" recruited "+t.name+" at "+n.capital+".",...s.events].slice(0,30)}}
@@ -103,46 +103,27 @@ export function declareWar(s:SimState,attackerId:string,defenderId:string,godMod
 export function signTreaty(s:SimState,a:string,b:string,type:Treaty["type"]):SimState{if(a===b||s.control[a]!==a||s.control[b]!==b)return s;const key=relationKey(a,b);if(s.treaties.some(t=>t.active&&relationKey(t.a,t.b)===key&&t.type===type))return s;const treaty:Treaty={id:key+":"+type+":"+Math.floor(s.elapsedSeconds),a,b,type,created:s.elapsedSeconds,active:true};const delta=type==="Alliance"?25:type==="Non-aggression"?18:12;return{...s,treaties:[...s.treaties,treaty],relations:{...s.relations,[key]:Math.min(100,(s.relations[key]??0)+delta)},events:[type+" treaty signed: "+nationName(s,a)+" and "+nationName(s,b)+".",...s.events].slice(0,30)}}
 export function advanceWorld(s:SimState,deltaSeconds=1):SimState{
  const dt=Math.max(0,Math.min(5,Number.isFinite(deltaSeconds)?deltaSeconds:1)),elapsedSeconds=s.elapsedSeconds+dt,clock=elapsedSeconds,units=s.units.map(u=>({...u})),wars=s.wars.map(w=>({...w,log:[...w.log]})),control={...s.control},sectorControl={...(s.sectorControl??{})},credits={...s.credits},events:string[]=[];
- let provinces=(s.provinces?.length?s.provinces:createProvinces(s.nations)).map(p=>{
-  const nation=s.nations.find(n=>n.id===p.nationId);
-  if(!nation)return p;
+ const nationById=new Map(s.nations.map(n=>[n.id,n]));
+ let provinces=(s.provinces??[]).map(p=>{
+  const nation=nationById.get(p.nationId);if(!nation)return p;
   const terrainRate=p.terrain==="mountain"?.22:p.terrain==="plateau"?.48:p.terrain==="hill"?.72:p.terrain==="desert"?.18:p.terrain==="coastal"?1.2:1.05;
-  const developmentFactor=.72+p.development/180;
-  const pressure=Math.max(.35,Math.min(1.25,nation.stability/70));
-  const rate=.00008*terrainRate*developmentFactor*pressure;
-  const growth=p.population<p.capacity?Math.max(0,Math.round(p.population*rate*dt)):0;
-  return {...p,population:Math.min(p.capacity,p.population+growth)};
+  const developmentFactor=.72+p.development/180,pressure=Math.max(.35,Math.min(1.25,nation.stability/70));
+  const growth=p.population<p.capacity?Math.max(0,Math.round(p.population*.00008*terrainRate*developmentFactor*pressure*dt)):0;
+  return growth?{...p,population:Math.min(p.capacity,p.population+growth)}:p;
  });
+ const provinceTotals=new Map<string,{population:number;capacity:number}>();
+ for(const p of provinces){const row=provinceTotals.get(p.nationId)??{population:0,capacity:0};row.population+=p.population;row.capacity+=p.capacity;provinceTotals.set(p.nationId,row)}
  let nations=s.nations.map(n=>{
-  const rows=provinces.filter(p=>p.nationId===n.id);
-  const population=rows.length?rows.reduce((sum,p)=>sum+p.population,0):n.population;
-  const capacity=rows.length?rows.reduce((sum,p)=>sum+p.capacity,0):n.populationCapacity;
-  return {...n,population:Math.max(1000,population),populationCapacity:Math.max(population,capacity),budget:Math.max(1,Math.round(population/1_000_000*.012))};
+  const row=provinceTotals.get(n.id);
+  const population=row?row.population:Math.max(1000,Math.min(n.populationCapacity||Number.MAX_SAFE_INTEGER,n.population+Math.round(n.population*.000084*dt)));
+  const capacity=row?row.capacity:Math.max(n.populationCapacity,population);
+  return {...n,population,populationCapacity:Math.max(population,capacity),budget:Math.max(1,Math.round(population/1_000_000*.012))};
  });
-  // Peaceful migration: small population flows toward stable neighboring countries with spare capacity.
-  const atWar=new Set(wars.filter(w=>w.status!=="Ceasefire").flatMap(w=>[w.attacker,w.defender]));
-  const migration:Record<string,number>={};
-  for(const origin of nations){
-    if(atWar.has(origin.id))continue;
-    const destination=origin.neighbors.map(id=>nations.find(n=>n.id===id))
-      .filter((n):n is Nation=>!!n&&!atWar.has(n.id)&&n.stability>=origin.stability+8&&n.population<n.populationCapacity)
-      .sort((a,b)=>b.stability-a.stability)[0];
-    if(!destination)continue;
-    const people=Math.min(Math.max(1,Math.floor(origin.population*0.0000005)),Math.max(0,destination.populationCapacity-destination.population));
-    if(people<=0)continue;
-    migration[origin.id]=(migration[origin.id]??0)-people;
-    migration[destination.id]=(migration[destination.id]??0)+people;
-  }
-  for(const n of nations){
-    n.population=Math.max(1000,Math.min(n.populationCapacity,n.population+(migration[n.id]??0)));
-    n.budget=Math.max(1,Math.round(n.population/1_000_000*0.012));
-    provinces=rebalanceProvincePopulation(provinces,n.id,n.population);
-  }
-  nations=nations.map(n=>{const rows=provinces.filter(p=>p.nationId===n.id);if(!rows.length)return n;const population=rows.reduce((sum,p)=>sum+p.population,0),capacity=rows.reduce((sum,p)=>sum+p.capacity,0);return{...n,population,populationCapacity:Math.max(population,capacity),budget:Math.max(1,Math.round(population/1_000_000*.012))}});
   // Autonomous force generation: recruit a formation when manpower, treasury and infrastructure permit.
-  for(const n of nations){const owned=units.filter(u=>u.nationId===n.id);const cap=Math.max(1,Math.min(40,Math.floor(n.population/250000)));const last=owned.reduce((v,u)=>Math.max(v,Number(u.recruitedAt??0)),0);if(owned.length<cap&&clock-last>=30&&(credits[n.id]??0)>=20&&n.population>100000){const fresh=makeUnit(n,owned.length+Math.floor(clock/30));fresh.id=n.id+"-auto-"+Math.floor(clock);fresh.recruitedAt=clock;units.push(fresh);credits[n.id]-=20;events.push(n.name+" raised a new formation through its standing recruitment system.");}}
+  const unitsByNation=new Map<string,ArmyUnit[]>();for(const u of units){const list=unitsByNation.get(u.nationId)??[];list.push(u);unitsByNation.set(u.nationId,list)}
+  for(const n of nations){const owned=unitsByNation.get(n.id)??[];const cap=Math.max(1,Math.min(8,Math.floor(n.population/500000)));const last=owned.reduce((v,u)=>Math.max(v,Number(u.recruitedAt??0)),0);if(owned.length<cap&&clock-last>=120&&(credits[n.id]??0)>=20&&n.population>100000){const fresh=makeUnit(n,owned.length+Math.floor(clock/120));fresh.id=n.id+"-auto-"+Math.floor(clock);fresh.recruitedAt=clock;units.push(fresh);owned.push(fresh);unitsByNation.set(n.id,owned);credits[n.id]-=20;events.push(n.name+" raised a new formation through its standing recruitment system.");}}
   // Passive economy and supply recovery: group units once to avoid repeated full-array scans.
-  const unitsByNation=new Map<string,ArmyUnit[]>();for(const u of units){const group=unitsByNation.get(u.nationId);if(group)group.push(u);else unitsByNation.set(u.nationId,[u])}
+  for(const u of units){const group=unitsByNation.get(u.nationId);if(group&&!group.includes(u))group.push(u);else if(!group)unitsByNation.set(u.nationId,[u])}
   for(const n of nations){credits[n.id]=Math.min(500,(credits[n.id]??0)+Math.max(0.05,n.budget/30)*dt);for(const u of unitsByNation.get(n.id)??[])if(u.status==="At capital")u.supply=Math.min(100,u.supply+(2+(s.upgrades[n.id+":logistics"]??0))*dt)}
   // Peacetime patrols stay on home territory: they move toward a border staging point, never a foreign capital.
   for(const u of units){
@@ -167,26 +148,7 @@ export function advanceWorld(s:SimState,deltaSeconds=1):SimState{
       u.x+=dx*ratio;u.y+=dy*ratio;u.status="Patrolling";
     }
   }
-  // Border violations trigger an immediate defensive response; no army can simply ignore an enemy formation.
-  const activeWars=wars.filter(w=>w.status!=="Ceasefire");
-  for(const intruder of units){
-    if(intruder.warId||intruder.status==="In battle")continue;
-    const host=s.nations.find(n=>n.id!==intruder.nationId&&control[n.id]===intruder.nationId);
-    if(!host)continue;
-    const defender=units.filter(u=>u.nationId===host.id&&!u.warId).sort((a,b)=>Math.hypot(a.x-intruder.x,a.y-intruder.y)-Math.hypot(b.x-intruder.x,b.y-intruder.y))[0];
-    if(!defender)continue;
-    const distance=Math.hypot(defender.x-intruder.x,intruder.y-defender.y);
-    if(distance>2.5)continue;
-    const already=wars.find(w=>w.status!=="Ceasefire"&&((w.attacker===intruder.nationId&&w.defender===host.id)||(w.attacker===host.id&&w.defender===intruder.nationId)));
-    if(already)continue;
-    const id="DEF-"+intruder.nationId+"-"+host.id+"-"+clock;
-    intruder.warId=id;intruder.targetId=host.id;intruder.status="In battle";intruder.targetX=undefined;intruder.targetY=undefined;
-    defender.status="In battle";defender.targetX=undefined;defender.targetY=undefined;
-    const attackerNation=s.nations.find(n=>n.id===intruder.nationId);
-    const frontline:[number,number]=[(intruder.x+defender.x)/2,(intruder.y+defender.y)/2];
-    wars.push({id,attacker:intruder.nationId,defender:host.id,status:"Active",stage:"Battle",progress:0,started:clock,frontline,origin:frontline,sector:0,log:["Defensive interception: the territorial owner engaged the invading formation immediately."]});
-    events.push(host.name+" scrambled its defense forces to intercept an invading "+attackerNation?.name+" formation.");
-  }
+  // Non-war patrols stop at their own borders; active-war contact is handled in the tactical loop below.
   // Autonomous governments can initiate only adjacent, independent and non-treaty conflicts.
   if(Math.floor(clock/10)>Math.floor(s.elapsedSeconds/10)&&activeWars.length<4){const candidates=s.nations.filter(n=>n.neighbors.length&&((s.aiProfiles[n.id]?.aggression??n.aggression)*.65+s.aiChampion.aggression*.35)>68&&control[n.id]===n.id).sort((a,b)=>seed(a.id,clock)-seed(b.id,clock));for(const attacker of candidates){const targets=attacker.neighbors.map(id=>s.nations.find(n=>n.id===id)).filter((n):n is Nation=>!!n&&control[n.id]===n.id&&!wars.some(w=>w.status!=="Ceasefire"&&((w.attacker===attacker.id&&w.defender===n.id)||(w.defender===attacker.id&&w.attacker===n.id)))&&(s.relations[relationKey(attacker.id,n.id)]??0)<s.aiChampion.diplomacy*.65&&!s.treaties.some(t=>t.active&&t.type!=="Trade"&&relationKey(t.a,t.b)===relationKey(attacker.id,n.id))).sort((a,b)=>a.stability-b.stability);const target=targets[0];if(!target)continue;const powerA=totalPower(units,attacker.id),powerD=totalPower(units,target.id);if(powerA>powerD*(.55+(s.aiChampion.defense/100)*.5)&&seed(attacker.id+target.id,clock)>(.65-(s.aiChampion.risk/100)*.35)){const id="WAR-"+attacker.id+"-"+target.id+"-"+clock;const [lat,lon]=borderPoint(attacker,target);const unit=units.filter(u=>u.nationId===attacker.id&&u.branch==="Army"&&u.status==="At capital"&&!u.warId).sort((a,b)=>b.strength-a.strength)[0];if(!unit)continue;unit.warId=id;unit.targetId=target.id;unit.status="Moving to frontier";unit.progress=0;wars.push({id,attacker:attacker.id,defender:target.id,status:"Mobilizing",stage:"Mobilizing",progress:0,started:clock,frontline:[lat,lon],origin:[lat,lon],sector:0,log:["AI approved a border-adjacent campaign after checking readiness, force balance and diplomacy."]});events.push(attacker.name+" declared a simulated war against "+target.name+". The formation departed "+attacker.capital+".");break}}}
   // Tactical contact: opposing formations must engage before an advancing army can pass them.

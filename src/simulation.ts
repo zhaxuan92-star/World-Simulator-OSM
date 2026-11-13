@@ -103,6 +103,7 @@ export function declareWar(s:SimState,attackerId:string,defenderId:string,godMod
 export function signTreaty(s:SimState,a:string,b:string,type:Treaty["type"]):SimState{if(a===b||s.control[a]!==a||s.control[b]!==b)return s;const key=relationKey(a,b);if(s.treaties.some(t=>t.active&&relationKey(t.a,t.b)===key&&t.type===type))return s;const treaty:Treaty={id:key+":"+type+":"+Math.floor(s.elapsedSeconds),a,b,type,created:s.elapsedSeconds,active:true};const delta=type==="Alliance"?25:type==="Non-aggression"?18:12;return{...s,treaties:[...s.treaties,treaty],relations:{...s.relations,[key]:Math.min(100,(s.relations[key]??0)+delta)},events:[type+" treaty signed: "+nationName(s,a)+" and "+nationName(s,b)+".",...s.events].slice(0,30)}}
 export function advanceWorld(s:SimState,deltaSeconds=1):SimState{
  const dt=Math.max(0,Math.min(5,Number.isFinite(deltaSeconds)?deltaSeconds:1)),elapsedSeconds=s.elapsedSeconds+dt,clock=elapsedSeconds,units=s.units.map(u=>({...u})),wars=s.wars.map(w=>({...w,log:[...w.log]})),control={...s.control},sectorControl={...(s.sectorControl??{})},credits={...s.credits},events:string[]=[];
+ const activeWars=wars.filter(w=>w.status!=="Ceasefire").length;
  const nationById=new Map(s.nations.map(n=>[n.id,n]));
  let provinces=(s.provinces??[]).map(p=>{
   const nation=nationById.get(p.nationId);if(!nation)return p;
